@@ -1,0 +1,1409 @@
+<title>Hardwood Gacha</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: arena night. Sticky scoreboard-style header + tabs, one content column (max 1100px). Cards are the hero. */
+:root{
+  color-scheme:dark;
+  --bg:#0d1220; --panel:#151c2d; --panel2:#1c2539; --line:#2a3550;
+  --fg:#eef1f8; --muted:#8e98b0;
+  --accent:#ff7a1a; --accent2:#ffb067; --wood:#c98a4b; --wood2:#a86b34;
+  --c-common:#9aa4b8; --c-rare:#3fa9f5; --c-epic:#cf5cf0; --c-legend:#f5c451;
+  --win:#3ccf7a; --lose:#ff5a5f;
+  --f-display:"Teko","Bebas Neue","Arial Narrow",Impact,sans-serif;
+  --f-body:"Kanit","Noto Sans Thai","Leelawadee UI",Tahoma,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--f-body);font-size:15px;font-weight:300;line-height:1.5;min-height:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--panel)}
+button{font-family:inherit;color:inherit;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* header */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--panel);border-bottom:1px solid var(--line)}
+.hrow{display:flex;align-items:center;gap:12px;padding-block:10px;flex-wrap:wrap}
+.logo{font-family:var(--f-display);font-size:30px;line-height:.9;letter-spacing:.02em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.logo .ball{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffa45c,var(--accent) 55%,#c8530a);position:relative;overflow:hidden;flex:none}
+.logo .ball::before,.logo .ball::after{content:"";position:absolute;inset:0;border:1.5px solid #3a1a05;border-radius:50%}
+.logo .ball::before{transform:scaleX(.45)}
+.logo .ball::after{border-width:0;border-top:1.5px solid #3a1a05;top:50%;height:0;border-radius:0}
+.logo b{color:var(--accent)}
+.chips{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.chip.user{font-family:var(--f-body);font-size:13px;padding:3px 10px 3px 4px;max-width:220px}
+.chip.user img{width:24px;height:24px;border-radius:50%;flex:none}
+.chip.user .un{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.user .sy{font-size:11px;color:var(--muted);white-space:nowrap}
+.chip.user .sy.bad{color:var(--lose)}
+.loading{padding:60px 0;text-align:center;color:var(--muted)}
+.chip{display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-family:var(--f-display);font-size:20px;line-height:1.2;font-variant-numeric:tabular-nums}
+.chip small{font-family:var(--f-body);font-size:11px;color:var(--muted);letter-spacing:.04em}
+.coin{width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3b0,var(--c-legend) 60%,#b8862a);flex:none}
+nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+nav button{background:none;border:0;border-bottom:3px solid transparent;padding:8px 14px 6px;font-size:15px;font-weight:500;color:var(--muted);white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+
+main{padding-block:22px 60px}
+h2{font-family:var(--f-display);font-weight:600;font-size:34px;line-height:1;letter-spacing:.02em;text-transform:uppercase;margin:0 0 4px;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 18px;font-size:14px}
+.eyebrow{font-family:var(--f-display);font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent2)}
+
+.btn{border:0;border-radius:10px;padding:10px 18px;font-weight:600;font-size:15px;background:var(--panel2);border:1px solid var(--line);display:inline-flex;align-items:center;gap:8px;justify-content:center;transition:transform .1s,filter .15s}
+.btn:hover{filter:brightness(1.15)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:linear-gradient(180deg,#ff8f3a,var(--accent));border-color:#ff9a4d;color:#1b0b00}
+.btn.gold{background:linear-gradient(180deg,#ffe08a,var(--c-legend));border-color:#ffe39a;color:#2a1c00}
+.btn:disabled{opacity:.4;cursor:not-allowed;filter:none}
+.btn.sm{padding:6px 12px;font-size:13px;border-radius:8px}
+.price{font-family:var(--f-display);font-size:19px;line-height:1;display:inline-flex;align-items:center;gap:4px}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel2);border:1px solid var(--accent);border-radius:10px;padding:10px 16px;z-index:50;font-weight:500;max-width:calc(100% - 32px)}
+
+/* ---------- CARD ---------- */
+.card{--cw:128px;--rc:var(--c-common);width:var(--cw);aspect-ratio:5/7;border-radius:calc(var(--cw)*.08);padding:3px;position:relative;background:linear-gradient(150deg,color-mix(in srgb,var(--rc) 100%,#fff 30%),var(--rc) 40%,color-mix(in srgb,var(--rc) 55%,#000));flex:none;user-select:none}
+.card.r-R{--rc:var(--c-rare)} .card.r-E{--rc:var(--c-epic)} .card.r-L{--rc:var(--c-legend)}
+.card .in{position:relative;height:100%;border-radius:calc(var(--cw)*.065);overflow:hidden;display:flex;flex-direction:column;padding:calc(var(--cw)*.06);
+  background:radial-gradient(120% 70% at 50% 38%,color-mix(in srgb,var(--rc) 35%,#141a2a),#10141f 70%)}
+.card .in::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(var(--cw)*.12),rgba(255,255,255,.025) calc(var(--cw)*.12) calc(var(--cw)*.125));pointer-events:none}
+.card.r-L .in::after{content:"";position:absolute;inset:-40%;background:linear-gradient(115deg,transparent 40%,rgba(255,240,190,.28) 48%,rgba(140,220,255,.18) 52%,transparent 60%);animation:sheen 3.2s linear infinite;pointer-events:none}
+.card.r-E .in::after{content:"";position:absolute;inset:-40%;background:linear-gradient(115deg,transparent 44%,rgba(240,190,255,.16) 50%,transparent 56%);animation:sheen 4.5s linear infinite;pointer-events:none}
+@keyframes sheen{from{transform:translateX(-45%)}to{transform:translateX(45%)}}
+.c-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1}
+.c-ovr{font-family:var(--f-display);font-weight:600;font-size:calc(var(--cw)*.27);line-height:.8;color:#fff}
+.c-pos{font-family:var(--f-display);font-size:calc(var(--cw)*.13);line-height:1;color:var(--rc);letter-spacing:.05em}
+.c-rar{font-family:var(--f-display);font-size:calc(var(--cw)*.1);letter-spacing:.1em;color:var(--rc);text-align:right;line-height:1.1}
+.c-stars{font-size:calc(var(--cw)*.075);color:var(--c-legend);letter-spacing:-.05em;text-align:right;line-height:1}
+.c-av{position:relative;z-index:1;margin:calc(var(--cw)*.02) auto 0;width:calc(var(--cw)*.46);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-size:calc(var(--cw)*.2);font-weight:600;color:#fff;
+  background:radial-gradient(circle at 35% 30%,hsl(var(--h) 70% 62%),hsl(var(--h) 60% 34%));box-shadow:0 0 0 2px color-mix(in srgb,var(--rc) 70%,transparent),0 6px 14px rgba(0,0,0,.4)}
+.c-name{position:relative;z-index:1;margin-top:auto;text-align:center;font-weight:600;font-size:calc(var(--cw)*.088);line-height:1.15;min-height:2.3em;display:flex;align-items:center;justify-content:center}
+.c-stats{position:relative;z-index:1;display:grid;grid-template-columns:repeat(5,1fr);margin-top:calc(var(--cw)*.03);border-top:1px solid color-mix(in srgb,var(--rc) 40%,transparent);padding-top:calc(var(--cw)*.025);text-align:center}
+.c-stats div{font-family:var(--f-display);font-size:calc(var(--cw)*.105);line-height:.95;font-variant-numeric:tabular-nums}
+.c-stats span{display:block;font-size:calc(var(--cw)*.062);color:var(--muted);letter-spacing:.04em}
+.card.locked{filter:grayscale(1);opacity:.32}
+.card .badge{position:absolute;z-index:3;top:-8px;left:50%;transform:translateX(-50%);font-family:var(--f-display);font-size:16px;line-height:1;padding:3px 9px 1px;border-radius:999px;background:var(--accent);color:#1b0b00;white-space:nowrap}
+.card .badge.up{background:var(--win)}
+.card .badge.cash{background:var(--c-legend)}
+.card.click{cursor:pointer;transition:transform .12s}
+.card.click:hover{transform:translateY(-3px)}
+
+/* flip reveal */
+.flip{width:var(--cw);aspect-ratio:5/7;perspective:900px;--cw:128px;position:relative;cursor:pointer}
+.flip .fi{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.3,.7,.3,1)}
+.flip.open .fi{transform:rotateY(180deg)}
+.flip .back,.flip .front{position:absolute;inset:0;backface-visibility:hidden}
+.flip .front{transform:rotateY(180deg)}
+.flip .front .card{--cw:inherit;width:100%}
+.back{border-radius:10px;border:3px solid var(--line);background:
+  radial-gradient(circle at 50% 50%,transparent 27%,var(--accent) 27.5% 29%,transparent 29.5%),
+  repeating-linear-gradient(45deg,#18213a 0 10px,#141c31 10px 20px);display:grid;place-items:center}
+.back span{font-family:var(--f-display);font-size:30px;color:var(--accent);letter-spacing:.05em}
+.flip.glow-E .back{border-color:var(--c-epic);box-shadow:0 0 18px color-mix(in srgb,var(--c-epic) 60%,transparent)}
+.flip.glow-L .back{border-color:var(--c-legend);box-shadow:0 0 26px var(--c-legend);animation:shake .5s infinite}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-1.5deg)}75%{transform:rotate(1.5deg)}}
+.flip.open.glow-L .back{animation:none}
+
+/* ---------- GACHA ---------- */
+.banner{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:22px;align-items:center;padding:24px;border-radius:18px;
+  background:radial-gradient(80% 120% at 85% 50%,rgba(255,122,26,.22),transparent 60%),linear-gradient(135deg,#1a2238,#121828);border:1px solid var(--line);overflow:hidden}
+.banner h2{font-size:52px}
+.banner h2 em{font-style:normal;color:var(--accent)}
+.showcase{display:flex;justify-content:center;align-items:flex-end;min-height:230px}
+.showcase .card{--cw:132px;margin:0 -22px;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+.showcase .card:nth-child(1){transform:rotate(-10deg) translateY(14px)}
+.showcase .card:nth-child(2){z-index:2;--cw:150px}
+.showcase .card:nth-child(3){transform:rotate(10deg) translateY(14px)}
+.rates{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}
+.rate{border-radius:6px;padding:2px 10px;font-size:13px;font-weight:500;border:1px solid var(--rc);color:var(--rc)}
+.pullbtns{display:flex;gap:10px;flex-wrap:wrap}
+.pity{margin-top:12px;font-size:13px;color:var(--muted)}
+.pitybar{height:6px;border-radius:3px;background:var(--panel2);margin-top:5px;overflow:hidden;max-width:320px}
+.pitybar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--c-legend))}
+.reveal{margin-top:22px;display:flex;flex-wrap:wrap;gap:16px 12px;justify-content:center;padding:22px 8px 8px}
+.reveal-bar{display:flex;justify-content:center;gap:10px;margin-top:12px}
+.startprog{margin:14px 0;font-size:14px;color:var(--muted)}
+.startprog .n{font-family:var(--f-display);font-size:44px;line-height:.9;color:var(--accent)}
+.startpos{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;align-self:center}
+.startpos div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 4px;text-align:center}
+.startpos div.ok{border-color:var(--win)}
+.startpos b{display:block;font-family:var(--f-display);font-size:22px;font-weight:500;color:var(--muted)}
+.startpos span{font-family:var(--f-display);font-size:34px;line-height:1}
+nav button:disabled{opacity:.35;cursor:not-allowed}
+
+/* ---------- TEAM ---------- */
+.teamgrid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:20px;align-items:start}
+.court{position:relative;width:100%;aspect-ratio:1/1.08;border-radius:14px;overflow:hidden;border:3px solid #e9dcc6;
+  background:repeating-linear-gradient(90deg,var(--wood) 0 38px,#c48546 38px 39px,#cf9353 39px 77px,#bf8040 77px 78px)}
+.court::before{content:"";position:absolute;left:32%;right:32%;top:0;height:46%;background:rgba(255,122,26,.55);border:3px solid #f2e6d2;border-top:0}
+.court::after{content:"";position:absolute;left:8%;right:8%;top:-38%;height:96%;border:3px solid #f2e6d2;border-radius:50%}
+.court .hoop{position:absolute;left:50%;top:5%;width:30px;height:30px;transform:translateX(-50%);border:3px solid var(--accent);border-radius:50%;z-index:1}
+.slot{position:absolute;transform:translateX(-50%);z-index:2;--cw:clamp(66px,17vw,112px)}
+.slot .card,.slot .empty,.benchrow .card,.benchrow .empty{--cw:inherit}
+.empty{width:var(--cw);aspect-ratio:5/7;border-radius:10px;border:2px dashed rgba(255,255,255,.55);background:rgba(13,18,32,.55);display:grid;place-items:center;text-align:center;font-family:var(--f-display);font-size:calc(var(--cw)*.2);line-height:1;color:#fff;cursor:pointer}
+.empty small{display:block;font-size:.55em;color:var(--muted);font-family:var(--f-body)}
+.slot .lbl,.benchrow .lbl{position:absolute;left:50%;bottom:-11px;transform:translateX(-50%);z-index:3;background:#0d1220;border:1px solid var(--line);border-radius:6px;font-family:var(--f-display);font-size:15px;line-height:1;padding:3px 7px 1px;white-space:nowrap}
+.lbl.pen{border-color:var(--lose);color:#ffb3b5}
+.benchwrap{margin-top:26px}
+.benchrow{display:flex;gap:14px;flex-wrap:wrap;--cw:clamp(66px,17vw,104px)}
+.benchrow > div{position:relative}
+.ratings{display:grid;gap:12px}
+.rt{display:grid;grid-template-columns:62px 1fr 38px;align-items:center;gap:10px}
+.rt b{font-family:var(--f-display);font-weight:500;font-size:18px;letter-spacing:.05em;color:var(--muted)}
+.rt .bar{height:10px;border-radius:5px;background:var(--panel2);overflow:hidden}
+.rt .bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--wood2),var(--accent))}
+.rt span{font-family:var(--f-display);font-size:22px;text-align:right;font-variant-numeric:tabular-nums}
+.bigovr{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.bigovr .n{font-family:var(--f-display);font-size:78px;line-height:.8;color:var(--accent)}
+.note{font-size:13px;color:var(--muted)}
+
+/* roster table + picker list */
+.rosterbox{margin-top:22px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px 6px 2px;overflow-x:auto}
+.rosterbox h3{font-family:var(--f-display);font-weight:500;font-size:22px;margin:6px 8px 2px}
+.rosterbox tr.rowclick{cursor:pointer}
+.rosterbox tr.rowclick:hover td{background:rgba(255,122,26,.07)}
+.rosterbox td{font-size:14px;padding:7px 8px}
+.rosterbox td.n{font-family:var(--f-display);font-size:20px;line-height:1}
+.rosterbox td.o{font-family:var(--f-display);font-size:24px;line-height:1;color:var(--accent2)}
+.slotlbl{font-family:var(--f-display);font-size:17px;color:var(--muted)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px;background:var(--rc)}
+.s-hi{color:var(--c-legend)} .s-gd{color:var(--win)} .s-lo{color:#ff9a9d}
+.penx{font-size:12px;color:#ffb3b5;margin-left:6px}
+.plist{display:grid;gap:6px}
+.pgrp{font-family:var(--f-display);font-size:24px;line-height:1;margin-top:10px;padding:4px 2px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:10px}
+.pgrp:first-child{margin-top:0}
+.pgrp span{font-family:var(--f-body);font-size:12px;color:var(--muted)}
+.prow{display:grid;grid-template-columns:44px minmax(0,1fr) 64px minmax(0,300px);gap:12px;align-items:center;text-align:left;width:100%;
+  background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--rc);border-radius:10px;padding:8px 12px}
+.prow:hover{border-color:var(--accent);border-left-color:var(--rc)}
+.prow.cur{background:rgba(255,122,26,.1)}
+.mini-av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-size:18px;color:#fff;background:radial-gradient(circle at 35% 30%,hsl(var(--h) 70% 62%),hsl(var(--h) 60% 34%))}
+.pn{min-width:0}
+.pn b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pn small{font-size:12px;color:var(--muted)}
+.pn small .bad{color:#ffb3b5} .pn small .use{color:var(--accent2)}
+.povr{font-family:var(--f-display);font-size:34px;line-height:.9;text-align:center}
+.povr span{display:block;font-size:12px;color:var(--muted);font-family:var(--f-body)}
+.pst{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;text-align:center}
+.pst div{font-family:var(--f-display);font-size:21px;line-height:1;font-variant-numeric:tabular-nums}
+.pst span{display:block;font-size:11px;color:var(--muted);letter-spacing:.04em}
+.pst i{display:block;font-style:normal;font-size:13px;height:13px}
+.up{color:var(--win)} .dn{color:#ff9a9d}
+@media (max-width:640px){
+  .prow{grid-template-columns:40px minmax(0,1fr) 54px}
+  .pst{grid-column:1/-1}
+}
+
+/* ---------- ENHANCE + MARKET ---------- */
+.c-plus{font-family:var(--f-display);font-size:calc(var(--cw)*.13);line-height:1;color:var(--accent);text-align:right;letter-spacing:0}
+.btn.danger{border-color:var(--lose);color:#ffc9ca}
+.enhgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+.enhmain{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+.enhcard{flex:none}
+.enhcard.ok .card{animation:enhok .9s}
+.enhcard.fail .card{animation:shake .35s 2}
+@keyframes enhok{0%{filter:brightness(2.2) drop-shadow(0 0 30px var(--c-legend))}100%{filter:none}}
+.enhinfo{flex:1;min-width:min(100%,230px);display:grid;gap:12px}
+.enhlv{font-family:var(--f-display);font-size:64px;line-height:.8;display:flex;align-items:baseline;gap:12px}
+.enhlv .to{color:var(--accent)} .enhlv b{font-size:36px;color:var(--muted);font-weight:400}
+.enhstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.enhstats div{background:var(--panel2);border-radius:8px;padding:6px 8px;font-family:var(--f-display);font-size:22px;line-height:1;font-variant-numeric:tabular-nums}
+.enhstats span{display:block;font-family:var(--f-body);font-size:11px;color:var(--muted);margin-bottom:2px}
+.enhstats b{font-weight:400;font-size:16px;margin-left:6px}
+.enhmeta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.enhmeta div{background:var(--panel2);border-radius:8px;padding:8px 10px}
+.enhmeta span{display:block;font-size:12px;color:var(--muted)}
+.enhmeta b{font-family:var(--f-display);font-size:24px;font-weight:500;line-height:1}
+.enhmsg{margin:0;font-weight:600;font-size:16px} .enhmsg.ok{color:var(--win)} .enhmsg.fail,.enhmsg.broke{color:var(--lose)}
+.starup{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
+.enhmeta small{font-size:11px}
+.enhwarn{border:1px solid var(--lose);background:rgba(255,90,95,.1);border-radius:10px;padding:10px 12px;font-size:14px}
+.srow{display:grid;grid-template-columns:44px minmax(0,1fr) 54px auto;gap:12px;align-items:center;text-align:left;width:100%;background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--rc);border-radius:10px;padding:8px 12px}
+button.srow:hover{border-color:var(--accent);border-left-color:var(--rc)}
+.srow.cur{background:rgba(255,122,26,.12);border-color:var(--accent);border-left-color:var(--rc)}
+.srow .pn small .use{color:var(--accent2)}
+.pplus{font-family:var(--f-display);font-size:28px;line-height:1;color:var(--accent);min-width:40px;text-align:right}
+.sellbtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.mhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:18px 12px}
+.mitem{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.mitem .card{--cw:132px}
+.mnote{font-size:12px;color:var(--muted)}
+@media (max-width:760px){
+  .enhgrid{grid-template-columns:1fr}
+  .srow{grid-template-columns:40px minmax(0,1fr) 48px}
+  .srow > :last-child{grid-column:1/-1;justify-self:end}
+  .srow > .pplus:last-child{grid-column:auto;justify-self:end}
+  .mgrid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+  .mitem .card,.grid .card{--cw:104px}
+}
+
+.benchhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.benchcount{font-family:var(--f-display);font-size:19px;color:var(--win)}
+.benchcount.bad{color:var(--lose)}
+.benchwarn{margin:12px 0 0;padding:8px 12px;border:1px solid var(--lose);border-radius:8px;background:rgba(255,90,95,.1);font-size:14px}
+.benchrow{row-gap:20px}
+
+.c-team{position:relative;z-index:1;text-align:center;font-size:calc(var(--cw)*.062);line-height:1.2;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.combox{font-size:12px;color:var(--win);margin-left:6px;font-weight:500}
+.combolist{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;padding:0 8px}
+.combo{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel2)}
+.combo.on{border-color:var(--win);background:rgba(60,207,122,.08)}
+.combo .ch{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.combo .ch b{font-weight:600;font-size:14px}
+.combo .ch span{font-size:12px;color:var(--muted)}
+.combo.on .ch span{color:var(--win);font-weight:500}
+.combo .cm{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.combo .cm span,.lg{font-size:12px;border-radius:6px;padding:1px 7px;border:1px solid var(--line)}
+.cm .in,.lg.in{border-color:var(--win);color:var(--win)}
+.cm .own,.lg.own{border-color:var(--accent2);color:var(--accent2)}
+.cm .miss,.lg.miss{color:var(--muted);opacity:.7}
+
+.citem{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center}
+.cnote{font-size:11px;color:var(--muted)}
+
+/* ---------- TACTICS ---------- */
+.tacpanel{margin-bottom:16px}
+.tacpanel summary{cursor:pointer;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.tacs{display:grid;gap:12px}
+.tacrow{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;align-items:start}
+.taclbl{font-family:var(--f-display);font-size:19px;line-height:1.3;color:var(--accent2)}
+.tacrow .note{margin-top:4px;font-size:12px}
+.tacline{display:flex;justify-content:space-between;gap:6px 16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:8px}
+.tacline b{color:var(--fg);font-weight:500}
+.halfpanel{margin-top:14px;border-color:var(--accent)}
+.hints{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.hints span{font-size:12px;background:rgba(255,176,103,.1);border:1px solid rgba(255,176,103,.35);color:var(--accent2);border-radius:8px;padding:3px 9px}
+@media (max-width:640px){.tacrow{grid-template-columns:1fr;gap:4px}}
+
+/* ---------- COLLECTION ---------- */
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.fbtn{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:500;color:var(--muted)}
+.fbtn[aria-pressed="true"]{color:var(--fg);border-color:var(--accent);background:rgba(255,122,26,.12)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:18px 12px;justify-items:center}
+.grid .card{--cw:124px}
+.progress{font-family:var(--f-display);font-size:22px}
+
+/* ---------- LEAGUE ---------- */
+.stages{display:grid;gap:10px}
+.stage{display:grid;grid-template-columns:54px minmax(0,1fr) auto;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stage.locked{opacity:.45}
+.stage .no{font-family:var(--f-display);font-size:40px;line-height:.8;color:var(--muted);text-align:center}
+.stage.cleared .no{color:var(--win)}
+.stage .nm{font-weight:600;font-size:16px}
+.stage .meta{font-size:13px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.stage .meta b{font-family:var(--f-display);font-weight:500;font-size:18px;color:var(--fg)}
+.stage .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.stage .roster{grid-column:1/-1;display:flex;gap:8px;overflow-x:auto;padding:10px 2px 4px}
+.stage .roster .card{--cw:84px}
+.wpct{grid-column:1/-1;font-size:14px}
+.wpct .bar{height:8px;border-radius:4px;background:var(--lose);overflow:hidden;margin-top:4px}
+.wpct .bar i{display:block;height:100%;background:var(--win)}
+.record{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+
+/* ---------- MATCH ---------- */
+.board{background:linear-gradient(180deg,#0a0e18,#121a2c);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center}
+.tm{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tm.r{text-align:right;align-items:flex-end}
+.tm .tn{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.tm .to{font-size:12px;color:var(--muted)}
+.tm .sc{font-family:var(--f-display);font-size:clamp(54px,12vw,86px);line-height:.85;font-variant-numeric:tabular-nums;color:#ffe3c2;text-shadow:0 0 18px rgba(255,122,26,.45)}
+.clock{text-align:center;font-family:var(--f-display);line-height:1}
+.clock .q{font-size:22px;color:var(--accent)}
+.clock .t{font-size:34px;font-variant-numeric:tabular-nums}
+.lines{margin-top:12px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:5px 8px;text-align:center;font-size:13px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-family:var(--f-display);font-weight:500;font-size:16px;color:var(--muted);letter-spacing:.04em}
+td:first-child,th:first-child{text-align:left}
+.ctrls{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.feed{background:var(--panel);border:1px solid var(--line);border-radius:12px;max-height:340px;overflow-y:auto;padding:4px 0}
+.ev{display:grid;grid-template-columns:62px 1fr auto;gap:10px;padding:6px 14px;font-size:14px;border-bottom:1px solid rgba(42,53,80,.5);align-items:baseline}
+.ev .tt{font-family:var(--f-display);font-size:16px;color:var(--muted)}
+.ev .ss{font-family:var(--f-display);font-size:17px;color:var(--muted)}
+.ev.s0{border-left:3px solid var(--accent)}
+.ev.s1{border-left:3px solid var(--c-rare)}
+.ev.hl{background:rgba(255,122,26,.08);font-weight:500}
+.ev.sys{color:var(--accent2);font-weight:500;border-left-color:transparent}
+.result{margin-top:16px;padding:18px;border-radius:14px;border:1px solid var(--line);background:var(--panel);display:grid;gap:10px}
+.result .big{font-family:var(--f-display);font-size:48px;line-height:.9}
+.result.w .big{color:var(--win)} .result.l .big{color:var(--lose)}
+.box{margin-top:14px;overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px}
+.box h3{font-family:var(--f-display);font-weight:500;font-size:22px;margin:6px 8px 2px}
+td.pl{font-weight:500}
+td.pl small{color:var(--muted);margin-left:4px}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(5,8,15,.8);z-index:40;display:flex;align-items:flex-end;justify-content:center;padding-top:calc(30px + env(safe-area-inset-top,0px))}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;width:min(900px,100%);max-height:100%;overflow-y:auto;padding:18px max(16px,env(safe-area-inset-left,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px))}
+.sheet .grid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
+.pick{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px}
+.pick .at{font-family:var(--f-display);font-size:15px;color:var(--muted);line-height:1}
+.pick .at.bad{color:#ffb3b5}
+.pick .inuse{font-size:11px;color:var(--accent2)}
+.sheethead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+
+@media (max-width:760px){
+  .banner{grid-template-columns:1fr;padding:18px}
+  .banner h2{font-size:40px}
+  .showcase{min-height:190px;order:-1}
+  .showcase .card{--cw:104px}
+  .showcase .card:nth-child(2){--cw:120px}
+  .teamgrid{grid-template-columns:1fr}
+  .reveal .flip{--cw:100px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+  .stage{grid-template-columns:40px minmax(0,1fr)}
+  .stage .acts{grid-column:1/-1;justify-content:flex-start}
+  .ev{grid-template-columns:52px 1fr auto;padding:6px 10px;font-size:13px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="hrow">
+      <div class="logo"><span class="ball" aria-hidden="true"></span>Hardwood <b>Gacha</b></div>
+      <div class="chips">
+        <div class="chip user" id="userchip"></div>
+        <div class="chip" title="เหรียญ"><span class="coin"></span><span id="coins">0</span></div>
+        <div class="chip"><small>TEAM OVR</small><span id="hovr">–</span></div>
+      </div>
+    </div>
+    <nav role="tablist" id="nav">
+      <button role="tab" data-v="gacha">เปิดการ์ด</button>
+      <button role="tab" data-v="team">ทีมของฉัน</button>
+      <button role="tab" data-v="enh">ตีบวก</button>
+      <button role="tab" data-v="market">ตลาด</button>
+      <button role="tab" data-v="league">ลีก & แข่งขัน</button>
+      <button role="tab" data-v="coll">คอลเลกชัน</button>
+    </nav>
+  </div>
+</header>
+<main class="wrap" id="main"></main>
+<div class="wrap"><footer>
+  <span>เกมแฟนเมดเพื่อความสนุก · ค่าพลังผู้เล่นเป็นการประเมินสมมติ ไม่ใช่ข้อมูลทางการ · <span id="savenote">กำลังเชื่อมต่อ…</span></span>
+  <span id="resetbox"><button class="btn sm" id="resetBtn">เริ่มเกมใหม่</button></span>
+</footer></div>
+<div id="modalRoot"></div>
+
+<script>
+/* ================= DATA ================= */
+// [name, pos, ovr, 3PT, INS(inside scoring), PLY(playmaking), REB, DEF]
+const RAW=[
+// Legendary 93+
+["Michael Jordan","SG",98,80,97,85,70,95],["LeBron James","SF",97,82,95,95,85,88],["Nikola Jokic","C",97,82,95,98,97,78],
+["Kareem Abdul-Jabbar","C",96,40,98,72,93,90],["Stephen Curry","PG",95,99,85,90,55,72],["Magic Johnson","PG",95,70,88,99,80,78],
+["Kobe Bryant","SG",95,84,94,82,62,90],["Shaquille O'Neal","C",95,20,99,65,95,85],["Larry Bird","SF",95,90,90,88,82,82],
+["Giannis Antetokounmpo","PF",95,55,98,80,94,92],["Hakeem Olajuwon","C",95,30,94,65,93,98],["Tim Duncan","PF",94,30,92,72,95,95],
+["Kevin Durant","SF",94,92,92,78,75,82],["Shai Gilgeous-Alexander","PG",94,82,95,85,60,85],["Victor Wembanyama","C",93,75,88,65,93,98],
+// Epic 88-92
+["Luka Doncic","PG",92,85,90,96,80,65],["Joel Embiid","C",92,70,95,70,90,88],["Dirk Nowitzki","PF",92,88,88,70,85,72],
+["Jayson Tatum","SF",91,84,88,78,82,84],["Anthony Davis","PF",91,45,92,65,93,94],["Kevin Garnett","PF",91,40,88,72,92,96],
+["Dwyane Wade","SG",91,55,94,82,65,88],["Kawhi Leonard","SF",91,85,88,70,75,96],["Karl Malone","PF",91,30,94,70,90,82],
+["Anthony Edwards","SG",90,84,90,75,62,82],["James Harden","SG",90,88,88,94,62,62],["Scottie Pippen","SF",90,65,82,85,80,96],
+["Allen Iverson","PG",89,70,92,82,50,78],["Chris Paul","PG",89,82,78,98,55,85],["Damian Lillard","PG",89,92,82,86,48,60],
+["Kyrie Irving","PG",89,88,92,86,48,64],["Jalen Brunson","PG",88,84,88,86,45,62],["Devin Booker","SG",88,87,88,80,50,65],
+["Donovan Mitchell","SG",88,85,88,78,52,70],["Ray Allen","SG",88,97,78,70,55,72],["Dennis Rodman","PF",88,15,60,55,99,96],
+["Paul George","SF",88,86,84,72,68,88],["Jimmy Butler","SF",88,65,88,80,70,90],["Tyrese Haliburton","PG",88,88,78,97,48,64],
+// Rare 82-87
+["Ja Morant","PG",87,65,92,86,52,62],["Karl-Anthony Towns","C",87,88,86,60,88,66],["Trae Young","PG",87,87,82,96,40,48],
+["Cade Cunningham","PG",87,76,86,90,62,72],["Steve Nash","PG",87,92,72,97,40,52],["Zion Williamson","PF",86,30,96,72,78,68],
+["Bam Adebayo","C",86,30,84,72,86,92],["Domantas Sabonis","C",86,50,86,84,95,64],["Jaylen Brown","SG",86,74,88,66,62,82],
+["Paolo Banchero","PF",86,65,88,74,78,74],["Evan Mobley","PF",86,50,84,66,86,94],["Reggie Miller","SG",86,96,72,64,45,66],
+["Rudy Gobert","C",85,5,82,40,95,97],["De'Aaron Fox","PG",85,74,88,80,48,72],["Jalen Williams","SF",85,76,84,74,62,82],
+["Klay Thompson","SG",85,95,72,58,52,78],["Alperen Sengun","C",85,30,88,86,86,70],["Chet Holmgren","C",85,76,80,60,84,92],
+["Jamal Murray","PG",85,84,84,82,48,62],["Pascal Siakam","PF",85,66,86,72,74,78],["Tony Parker","PG",85,50,90,84,40,66],
+["Manu Ginobili","SG",84,80,82,82,52,72],["Dikembe Mutombo","C",84,5,72,30,94,98],["Draymond Green","PF",83,55,62,90,80,95],
+["Ben Wallace","C",83,5,55,40,95,98],
+// Common <82
+["Derrick White","SG",81,82,68,74,50,88],["Jrue Holiday","PG",81,78,72,78,52,90],["Mikal Bridges","SF",81,78,74,60,52,86],
+["OG Anunoby","SF",80,76,70,52,62,92],["Aaron Gordon","PF",80,62,84,58,76,82],["Jarrett Allen","C",80,5,82,40,90,84],
+["Josh Hart","SG",79,66,70,74,82,80],["Brook Lopez","C",79,80,70,40,72,86],["Isaiah Hartenstein","C",79,20,72,70,88,82],
+["Kyle Lowry","PG",79,80,66,84,52,76],["Andre Iguodala","SF",78,65,68,74,60,88],["Naz Reid","C",78,80,76,48,72,66],
+["Alex Caruso","SG",77,70,58,66,52,94],["Kentavious Caldwell-Pope","SG",77,82,60,52,45,82],["Bobby Portis","PF",77,72,74,40,82,58],
+["Steven Adams","C",77,5,70,50,94,76],["Marcus Smart","PG",77,66,62,74,52,92],["JJ Redick","SG",77,95,58,52,40,52],
+["Nic Claxton","C",77,5,78,48,82,86],["Herb Jones","SF",77,66,62,52,58,94],["Robert Horry","PF",76,78,62,50,70,76],
+["Kyle Korver","SF",76,96,52,48,45,58],["Tyus Jones","PG",76,76,60,86,38,58],["Shane Battier","SF",75,75,55,52,56,86],
+["P.J. Tucker","PF",74,72,52,40,70,84]
+];
+const POS=["PG","SG","SF","PF","C"];
+const ATTR=["thr","ins","ply","reb","def"];
+const ATTR_LBL={thr:"3PT",ins:"INS",ply:"PLY",reb:"REB",def:"DEF"};
+const RAR={C:{name:"COMMON",th:"ธรรมดา",rate:.55,refund:20},R:{name:"RARE",th:"หายาก",rate:.30,refund:40},E:{name:"EPIC",th:"เอพิก",rate:.12,refund:80},L:{name:"LEGENDARY",th:"ตำนาน",rate:.03,refund:200}};
+const BENCH_MIN=7, BENCH_MAX=10, LINEUP_N=5+BENCH_MAX;
+const PITY=60, COST1=100, COST10=900, START_COINS=1500;
+const slug=s=>s.toLowerCase().replace(/[^a-z]/g,"");
+const PL=RAW.map(r=>{const p={id:slug(r[0]),name:r[0],pos:r[1],ovr:r[2],thr:r[3],ins:r[4],ply:r[5],reb:r[6],def:r[7]};
+  p.rar=p.ovr>=93?"L":p.ovr>=88?"E":p.ovr>=82?"R":"C"; let h=0;for(const ch of p.name)h=(h*31+ch.charCodeAt(0))%360; p.hue=h;
+  p.ini=p.name.split(/[\s-]+/).map(w=>w[0]).join("").slice(0,3).toUpperCase(); return p;});
+// second position each player really plays (none = single-position player)
+const POS2={michaeljordan:"SF",lebronjames:"PF",magicjohnson:"SF",kobebryant:"SF",larrybird:"PF",giannisantetokounmpo:"C",
+  timduncan:"C",kevindurant:"PF",shaigilgeousalexander:"SG",victorwembanyama:"PF",lukadoncic:"SG",dirknowitzki:"C",
+  jaysontatum:"PF",anthonydavis:"C",kevingarnett:"C",jamesharden:"PG",scottiepippen:"PF",alleniverson:"SG",kyrieirving:"SG",
+  donovanmitchell:"PG",paulgeorge:"SG",jimmybutler:"PF",karlanthonytowns:"PF",cadecunningham:"SG",bamadebayo:"PF",
+  domantassabonis:"PF",jaylenbrown:"SF",paolobanchero:"SF",evanmobley:"C",jalenwilliams:"SG",klaythompson:"SF",
+  chetholmgren:"PF",pascalsiakam:"SF",manuginobili:"SF",draymondgreen:"C",benwallace:"PF",derrickwhite:"PG",jrueholiday:"SG",
+  mikalbridges:"SG",oganunoby:"PF",aarongordon:"SF",joshhart:"SF",andreiguodala:"SG",nazreid:"PF",alexcaruso:"PG",
+  bobbyportis:"C",marcussmart:"SG",roberthorry:"SF",kylekorver:"SG",shanebattier:"PF"};
+PL.forEach(p=>{p.pos2=POS2[p.id]||null;p.poss=p.pos2?[p.pos,p.pos2]:[p.pos];p.posTxt=p.poss.join("/");});
+// penalty steps from the nearer of the player's positions
+const posDist=(pd,slot)=>Math.min(...pd.poss.map(x=>Math.abs(POS.indexOf(x)-slot)));
+// the real season (and team) each card's ratings represent; teammates from the same season form a combo
+const SEASON={
+  michaeljordan:"Bulls|1995-96",scottiepippen:"Bulls|1995-96",dennisrodman:"Bulls|1995-96",
+  magicjohnson:"Lakers|1984-85",kareemabduljabbar:"Lakers|1984-85",
+  shaquilleoneal:"Lakers|2000-01",kobebryant:"Lakers|2000-01",
+  timduncan:"Spurs|2004-05",tonyparker:"Spurs|2004-05",manuginobili:"Spurs|2004-05",roberthorry:"Spurs|2004-05",
+  stephencurry:"Warriors|2016-17",kevindurant:"Warriors|2016-17",klaythompson:"Warriors|2016-17",draymondgreen:"Warriors|2016-17",andreiguodala:"Warriors|2016-17",
+  lebronjames:"Heat|2011-12",dwyanewade:"Heat|2011-12",shanebattier:"Heat|2011-12",
+  jaysontatum:"Celtics|2023-24",jaylenbrown:"Celtics|2023-24",jrueholiday:"Celtics|2023-24",derrickwhite:"Celtics|2023-24",
+  nikolajokic:"Nuggets|2022-23",jamalmurray:"Nuggets|2022-23",aarongordon:"Nuggets|2022-23",kentaviouscaldwellpope:"Nuggets|2022-23",
+  shaigilgeousalexander:"Thunder|2024-25",chetholmgren:"Thunder|2024-25",jalenwilliams:"Thunder|2024-25",alexcaruso:"Thunder|2024-25",isaiahhartenstein:"Thunder|2024-25",
+  jalenbrunson:"Knicks|2024-25",joshhart:"Knicks|2024-25",oganunoby:"Knicks|2024-25",mikalbridges:"Knicks|2024-25",
+  anthonyedwards:"Timberwolves|2023-24",karlanthonytowns:"Timberwolves|2023-24",rudygobert:"Timberwolves|2023-24",nazreid:"Timberwolves|2023-24",
+  donovanmitchell:"Cavaliers|2024-25",evanmobley:"Cavaliers|2024-25",jarrettallen:"Cavaliers|2024-25",
+  jimmybutler:"Heat|2022-23",bamadebayo:"Heat|2022-23",
+  domantassabonis:"Kings|2022-23",deaaronfox:"Kings|2022-23",
+  zionwilliamson:"Pelicans|2023-24",herbjones:"Pelicans|2023-24",
+  lukadoncic:"Mavericks|2023-24",kyrieirving:"Mavericks|2023-24",
+  devinbooker:"Suns|2020-21",chrispaul:"Suns|2020-21",
+  alleniverson:"76ers|2000-01",dikembemutombo:"76ers|2000-01",
+  paulgeorge:"Thunder|2018-19",stevenadams:"Thunder|2018-19",
+  kawhileonard:"Raptors|2018-19",kylelowry:"Raptors|2018-19",pascalsiakam:"Raptors|2018-19",
+  giannisantetokounmpo:"Bucks|2020-21",brooklopez:"Bucks|2020-21",bobbyportis:"Bucks|2020-21",pjtucker:"Bucks|2020-21",
+  larrybird:"Celtics|1985-86",hakeemolajuwon:"Rockets|1993-94",victorwembanyama:"Spurs|2024-25",joelembiid:"76ers|2022-23",
+  dirknowitzki:"Mavericks|2006-07",anthonydavis:"Lakers|2019-20",kevingarnett:"Timberwolves|2003-04",karlmalone:"Jazz|1996-97",
+  jamesharden:"Rockets|2017-18",damianlillard:"Trail Blazers|2019-20",tyresehaliburton:"Pacers|2023-24",jamorant:"Grizzlies|2021-22",
+  traeyoung:"Hawks|2021-22",cadecunningham:"Pistons|2024-25",stevenash:"Suns|2005-06",paolobanchero:"Magic|2024-25",
+  reggiemiller:"Pacers|1997-98",rayallen:"SuperSonics|2005-06",alperensengun:"Rockets|2024-25",benwallace:"Pistons|2003-04",
+  marcussmart:"Celtics|2021-22",jjredick:"Clippers|2015-16",nicclaxton:"Nets|2022-23",kylekorver:"Hawks|2014-15",tyusjones:"Wizards|2023-24"};
+PL.forEach(p=>{const [t,y]=(SEASON[p.id]||"–|–").split("|");p.team=t;p.season=y;p.teamTxt=`${t} ${y}`;});
+// combo = every card from one team + season (2+ players); a full set in your 15-man roster boosts each member
+const COMBOS=Object.values(PL.reduce((m,p)=>{(m[p.teamTxt]=m[p.teamTxt]||{name:p.teamTxt,ids:[]}).ids.push(p.id);return m;},{})).filter(c=>c.ids.length>=2);
+const comboBonus=c=>c.ids.length>=4?3:2;
+const BYID=Object.fromEntries(PL.map(p=>[p.id,p]));
+const BYRAR={C:[],R:[],E:[],L:[]}; PL.forEach(p=>BYRAR[p.rar].push(p));
+
+const STAGES=[
+ // adj = rating shift calibrated by simulation so each stage beats the previous one ~65% of the time
+ {name:"Rookie Camp",th:"แคมป์รุกกี้",t:80,adj:1},{name:"Summer League",th:"ซัมเมอร์ลีก",t:83,adj:0},{name:"G League Grinders",th:"จีลีก",t:85,adj:.5},
+ {name:"Playoff Hopefuls",th:"ลุ้นเพลย์ออฟ",t:87,adj:.5},{name:"Contenders",th:"ทีมลุ้นแชมป์",t:89,adj:1.5},{name:"Conference Finalists",th:"ชิงแชมป์สาย",t:90,adj:1.5},
+ {name:"Superteam",th:"ซูเปอร์ทีม",t:91,adj:1.5},{name:"Champions",th:"แชมป์เก่า",t:92,adj:5.5},{name:"Dynasty",th:"ราชวงศ์",t:94,adj:6},
+ {name:"All-Time Legends",th:"ทีมตำนานตลอดกาล",t:98,adj:.5,fixed:{st:["magicjohnson","michaeljordan","lebronjames","giannisantetokounmpo","nikolajokic"],bn:["stephencurry","kobebryant","shaquilleoneal","larrybird","kareemabduljabbar","timduncan","hakeemolajuwon"],stars:2}}
+];
+
+/* ================= STATE ================= */
+const KEY="hardwood-gacha-v1";
+function fresh(){return{coins:START_COINS,owned:{},lineup:Array(LINEUP_N).fill(null),pity:0,cleared:0,w:0,l:0,pulls:0,bonusAt:0,starterDone:false,tac:{pace:"normal",off:"bal",def:"man",reb:"normal",rot:"normal"}};}
+// turn any stored save (old versions too) into a full, current state
+function normalize(s){
+  const st=Object.assign(fresh(),s);
+  if(s.starterDone===undefined)st.starterDone=Object.keys(s.owned||{}).length>0;
+  Object.values(st.owned).forEach(o=>{o.spares=o.spares||[];o.plus=o.plus||0;o.spent=o.spent||0;});
+  while(st.lineup.length<LINEUP_N)st.lineup.push(null);
+  return st;
+}
+let S=fresh();
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null"); if(s&&s.owned)S=normalize(s);}catch(e){}
+S=normalize(S);
+
+/* ---------- account + cloud save ----------
+   Signed-in players get a private save at data/users/<id>/save, so the same
+   account picks up its progress on any device. Without an account the game
+   still works and saves in this browser only. */
+const DEVICE=(()=>{try{let d=localStorage.getItem(KEY+"-dev");if(!d){d=Math.random().toString(36).slice(2,10);localStorage.setItem(KEY+"-dev",d);}return d;}catch(e){return Math.random().toString(36).slice(2,10);}})();
+const cloud={state:"loading",ref:null,me:null,busy:false,dirty:false,timer:null,at:0};
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+  if(!cloud.ref)return;
+  cloud.dirty=true; clearTimeout(cloud.timer); cloud.timer=setTimeout(flushCloud,700);
+}
+async function flushCloud(){
+  if(!cloud.ref||cloud.busy||!cloud.dirty)return;
+  cloud.busy=true; cloud.dirty=false; cloud.at=Date.now(); setSync("saving");
+  try{await cloud.ref.set({v:1,at:cloud.at,dev:DEVICE,s:JSON.parse(JSON.stringify(S))});setSync("ok");}
+  catch(e){
+    if(e&&e.code==="unavailable"){cloud.dirty=true;setTimeout(flushCloud,1500+Math.random()*1500);}
+    else if(e&&(e.code==="invalid_argument"||e.code==="revoked"||e.code==="not_granted")){cloud.ref=null;setSync("local");toast("บันทึกออนไลน์ไม่ได้ · เซฟไว้ในเครื่องนี้แทน");}
+    else setSync("err");
+  }
+  cloud.busy=false;
+  if(cloud.dirty)flushCloud();
+}
+function setSync(st){cloud.state=st;header();}
+async function cloudInit(){
+  const wait=(p,ms)=>Promise.race([p,new Promise(r=>setTimeout(()=>r(null),ms))]);
+  try{
+    const c=window.claude; if(!c||!c.use)throw 0;
+    const [db,user]=await wait(Promise.all([c.use("db"),c.use("user")]),12000)||[];
+    if(!db||!user)throw 0;
+    cloud.me=await user.me(); const uid=cloud.me.id; if(!uid)throw 0;
+    const ref=db.doc("data/users/"+uid+"/save");
+    const snap=await ref.get();
+    cloud.ref=ref;
+    if(snap.exists&&snap.data().s&&snap.data().s.owned){S=normalize(snap.data().s);cloud.at=snap.data().at||0;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}cloud.state="ok";}
+    else{cloud.state="ok";save();}   // first time on this account: upload what this browser has
+    lastPull=null;match=null;leagueInfo={};
+    // coming back to the tab: pick up progress saved from another device meanwhile
+    document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pullRemote();});
+  }catch(e){cloud.ref=null;cloud.state="local";}
+  render();
+}
+async function pullRemote(){
+  if(!cloud.ref||cloud.busy||cloud.dirty||view==="match"||lastPull)return;
+  try{const snap=await cloud.ref.get(); if(!snap.exists)return; const d=snap.data();
+    if(d.dev!==DEVICE&&d.at>cloud.at&&d.s&&d.s.owned){S=normalize(d.s);cloud.at=d.at;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}render();toast("โหลดความคืบหน้าล่าสุดจากอุปกรณ์อื่นแล้ว");}
+  }catch(e){}
+}
+
+/* ================= HELPERS ================= */
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rand=Math.random;
+const randn=()=>{let u=0,v=0;while(!u)u=rand();while(!v)v=rand();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
+function pickW(arr,wf){const ws=arr.map(wf);let t=ws.reduce((a,b)=>a+b,0),r=rand()*t;for(let i=0;i<arr.length;i++){r-=ws[i];if(r<=0)return arr[i];}return arr[arr.length-1];}
+function seeded(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const short=n=>{const w=n.split(" ");return w.length>1?w.slice(1).join(" "):n;};
+function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600);}
+
+// effective attributes: +2 per extra star, -4 per position step away from the slot
+// s = star count, or an owned-card object {stars, plus}; each enhancement +1 adds +1 to everything
+function eff(pd,s=1,slot=null,adj=0){
+  const stars=typeof s==="object"?s.stars:s, plus=typeof s==="object"?(s.plus||0):0, cb=typeof s==="object"?(s.bonus||0):0;
+  const pen=slot==null?0:posDist(pd,slot)*4;
+  const b=(stars-1)*2+plus+cb-pen+adj; const e={ovr:Math.round(pd.ovr+b),pen};
+  ATTR.forEach(k=>e[k]=clamp(Math.round(pd[k]+b),1,99)); return e;
+}
+function cardHTML(pd,s=1,o={}){
+  const stars=typeof s==="object"?s.stars:s, plus=typeof s==="object"?(s.plus||0):0;
+  const e=o.e||eff(pd,s,null);
+  const st=(stars>1?"★".repeat(stars):"")+(plus?`<div class="c-plus">+${plus}</div>`:"");
+  return `<div class="card r-${pd.rar}${o.locked?" locked":""}${o.click?" click":""}" ${o.attrs||""} style="--h:${pd.hue}${o.cw?";--cw:"+o.cw:""}">
+   ${o.badge||""}
+   <div class="in">
+    <div class="c-top"><div><div class="c-ovr">${e.ovr}</div><div class="c-pos">${pd.posTxt}</div></div>
+     <div><div class="c-rar">${RAR[pd.rar].name}</div><div class="c-stars">${st}</div></div></div>
+    <div class="c-av">${pd.ini}</div>
+    <div class="c-name">${esc(pd.name)}</div>
+    <div class="c-team">${esc(pd.team)} · ${pd.season}</div>
+    <div class="c-stats">${ATTR.map(k=>`<div>${e[k]}<span>${ATTR_LBL[k]}</span></div>`).join("")}</div>
+   </div></div>`;
+}
+
+/* ================= TEAM ================= */
+function activeBonus(){
+  const inTeam=new Set(S.lineup.filter(id=>id&&S.owned[id])), m={};
+  COMBOS.forEach(c=>{if(c.ids.every(id=>inTeam.has(id)))c.ids.forEach(id=>m[id]=(m[id]||0)+comboBonus(c));});
+  return m;
+}
+const withB=(id,bm)=>({...S.owned[id],bonus:bm[id]||0});
+function myTeam(){
+  const bm=activeBonus();
+  const L=S.lineup.map(id=>id&&S.owned[id]?{pd:BYID[id],stars:S.owned[id].stars,plus:S.owned[id].plus||0,bonus:bm[id]||0}:null);
+  return {name:"ทีมของคุณ",starters:L.slice(0,5),bench:L.slice(5).filter(Boolean),adj:0,tac:S.tac};
+}
+const benchCount=()=>S.lineup.slice(5).filter(id=>id&&S.owned[id]).length;
+function rosterIssue(){
+  if(S.lineup.slice(0,5).some(id=>!id||!S.owned[id]))return "จัดตัวจริงให้ครบ 5 ตำแหน่ง";
+  const b=benchCount(); if(b<BENCH_MIN)return `ต้องมีตัวสำรองอย่างน้อย ${BENCH_MIN} คน (ตอนนี้ ${b} คน)`;
+  return null;
+}
+function teamRatings(t){
+  if(t.starters.some(x=>!x))return null;
+  const es=t.starters.map((c,i)=>eff(c.pd,c,i,t.adj||0));
+  const eb=t.bench.map(c=>eff(c.pd,c,null,t.adj||0)).sort((x,y)=>y.ovr-x.ovr).slice(0,5);
+  const avg=(a,k)=>a.reduce((s,x)=>s+x[k],0)/a.length;
+  const off=avg(es.map(e=>({v:Math.max(e.thr,e.ins)*.55+e.ply*.2+e.ovr*.25})),"v");
+  const st=avg(es,"ovr"); const bn=eb.length?avg(eb,"ovr"):st-12;
+  return {ovr:Math.round(st*.82+bn*.18),off:Math.round(off),def:Math.round(avg(es,"def")),reb:Math.round(avg(es,"reb")),ply:Math.round(avg(es,"ply")),thr:Math.round(avg(es,"thr"))};
+}
+function stageTeam(i){
+  const sg=STAGES[i];
+  if(sg.fixed){return{name:sg.name,starters:sg.fixed.st.map(id=>({pd:BYID[id],stars:sg.fixed.stars})),bench:sg.fixed.bn.map(id=>({pd:BYID[id],stars:sg.fixed.stars})),adj:sg.adj||0,tac:sg.tac};}
+  const r=seeded(i*7919+13), used=new Set();
+  const starters=POS.map(pos=>{
+    const c=PL.filter(p=>p.pos===pos&&!used.has(p.id)).map(p=>({p,d:Math.abs(p.ovr-sg.t)+r()*6})).sort((a,b)=>a.d-b.d)[0].p;
+    used.add(c.id); return{pd:c,stars:1};});
+  const bench=Array.from({length:BENCH_MIN},(_,k)=>{const c=PL.filter(p=>!used.has(p.id)).map(p=>({p,d:Math.abs(p.ovr-(sg.t-(k<3?4:8)))+r()*8})).sort((a,b)=>a.d-b.d)[0].p;used.add(c.id);return{pd:c,stars:1};});
+  const t={name:sg.name,starters,bench,adj:0,tac:sg.tac};
+  t.adj=sg.adj!=null?sg.adj:clamp(sg.t-teamRatings(t).ovr,-9,8);
+  return t;
+}
+
+/* ================= SIMULATION ================= */
+/* ================= TACTICS ================= */
+const TAC_OPTS={
+  pace:{label:"จังหวะเกม",opts:{slow:["ช้า","ใช้เวลาบุกนาน ได้ช็อตดีขึ้น เสียบอลน้อย · จำนวนครองบอลน้อยลง ช่วยทีมที่อ่อนกว่าลดความต่าง"],normal:["ปกติ",""],fast:["เร็ว","ได้ครองบอลมากขึ้น แต่เสียบอลบ่อยขึ้น · ทีมที่เก่งกว่าได้เปรียบ"]}},
+  off:{label:"แนวรุก",opts:{bal:["สมดุล","เคลื่อนบอลหาช็อตที่ดี เปอร์เซ็นต์ยิงดีขึ้นเล็กน้อย"],three:["ยิงไกล","ยิงสามแต้มมากขึ้นมาก · เหมาะกับทีมที่ 3PT สูง"],inside:["บุกใต้แป้น","เน้นทำแต้มใกล้ห่วง · เหมาะกับทีมที่ INS สูง"],star:["ส่งบอลให้ซูเปอร์สตาร์","ตัวเก่งสุดได้ยิงเยอะขึ้นมาก แต่เสียบอลบ่อยขึ้น"]}},
+  def:{label:"แนวรับ",opts:{man:["แมนทูแมน","ประกบตัวต่อตัว · ค่า DEF ของคนประกบสำคัญที่สุด"],zone:["โซน","ปิดใต้แป้นแน่น แต่เปิดให้คู่แข่งยิงสามแต้มมากขึ้น"],press:["เพรสเต็มสนาม","บีบให้เสียบอลบ่อย · ถ้าหลุดเพรสคู่แข่งได้ช็อตง่ายใต้แป้น"]}},
+  reb:{label:"รีบาวด์",opts:{crash:["บุกรีบาวด์","แย่งรีบาวด์เกมรุกมากขึ้น แต่โดนบุกเร็วสวนกลับบ่อย"],normal:["ปกติ",""],back:["ถอยกลับตั้งรับ","รีบาวด์เกมรุกน้อยลง แต่แทบไม่โดนบุกเร็ว"]}},
+  rot:{label:"การใช้ตัว",opts:{heavy:["ตัวจริงยืนยาว","ตัวจริงเล่นนานขึ้น แต่ล้าในควอเตอร์ 4 (ค่าพลัง −4)"],normal:["ปกติ",""],deep:["หมุนตัวเยอะ","สำรองได้เล่นมากขึ้น · ตัวจริงสดในควอเตอร์ 4 (+2)"]}}
+};
+const DEF_TAC={pace:"normal",off:"bal",def:"man",reb:"normal",rot:"normal"};
+const STAGE_TACS=[{},{pace:"fast",off:"three"},{def:"press",pace:"fast"},{def:"zone",off:"inside"},{off:"star"},
+  {pace:"slow",off:"inside",def:"zone",reb:"crash"},{off:"star",pace:"fast",rot:"heavy"},{def:"press",reb:"crash",rot:"deep"},
+  {off:"three",def:"zone",rot:"deep"},{pace:"fast",off:"star",reb:"crash"}];
+STAGES.forEach((s,i)=>s.tac={...DEF_TAC,...STAGE_TACS[i]});
+const tacSummary=t=>Object.keys(TAC_OPTS).filter(k=>t[k]!==DEF_TAC[k]).map(k=>TAC_OPTS[k].opts[t[k]][0]).join(" · ")||"ปกติทุกด้าน";
+function tacHints(t){const h=[];
+  if(t.def==="zone")h.push("เล่นโซน → ลองแนวรุก \"ยิงไกล\" ถ้าทีมคุณ 3PT ดี");
+  if(t.def==="press")h.push("เพรสเต็มสนาม → ทีมที่ PLY สูงหลุดเพรสได้ ถ้า PLY ต่ำลองเล่น \"ช้า\"");
+  if(t.off==="three")h.push("ยิงสามเยอะ → อย่าเล่นโซน ใช้แมนทูแมน");
+  if(t.off==="inside")h.push("บุกใต้แป้น → แนวรับ \"โซน\" ปิดใต้แป้นได้ดี");
+  if(t.off==="star")h.push("เน้นซูเปอร์สตาร์ → \"เพรส\" บีบให้เสียบอลได้");
+  if(t.reb==="crash")h.push("บุกรีบาวด์ → ทีมคุณจะได้บุกเร็วสวนกลับบ่อย");
+  if(t.pace==="fast")h.push("เล่นเร็ว → ถ้าทีมคุณอ่อนกว่า เล่น \"ช้า\" ช่วยลดความต่าง");
+  if(t.pace==="slow")h.push("เล่นช้า → ถ้าทีมคุณเก่งกว่า เล่น \"เร็ว\" เพิ่มจำนวนครองบอล");
+  if(t.rot==="heavy")h.push("ตัวจริงยืนยาว → ควอเตอร์ 4 ตัวจริงเขาจะล้า");
+  return h;}
+function tacHTML(tac,attr){
+  return `<div class="tacs">${Object.entries(TAC_OPTS).map(([k,g])=>`<div class="tacrow"><div class="taclbl">${g.label}</div>
+    <div><div class="filters" style="margin:0">${Object.entries(g.opts).map(([v,o])=>`<button class="fbtn" ${attr}="${k}" data-tv="${v}" aria-pressed="${tac[k]===v}">${o[0]}</button>`).join("")}</div>
+    <div class="note">${g.opts[tac[k]][1]||"ค่าเริ่มต้น"}</div></div></div>`).join("")}</div>`;
+}
+
+/* ================= SIMULATION ================= */
+function simulate(A,B,log=true){return makeGame(A,B,log).runTo(Infinity);}
+// a game that can be played in parts (first half, then second half with a new plan)
+function makeGame(A,B,log=true){
+  const sides=[A,B].map(team=>{
+    const people=[];
+    const mk=(c,starter)=>{const p={id:c.pd.id,name:c.pd.name,pos:c.pd.pos,pd:c.pd,stars:c.stars,plus:c.plus||0,bonus:c.bonus||0,starter,form:randn()*2.5,sec:0,pts:0,reb:0,ast:0,stl:0,blk:0,fgm:0,fga:0,tpm:0,tpa:0,ftm:0,fta:0,to:0};people.push(p);return p;};
+    const st=team.starters.map(c=>mk(c,true)), bn=team.bench.map(c=>mk(c,false));
+    const at=(p,slot,x=0)=>eff(p.pd,p,slot,(team.adj||0)+p.form+x);
+    // depth chart: each bench player backs up the position he fits best; deeper backups at a position cost 6 "fit" points
+    const chain=st.map(p=>[p]);
+    bn.slice().sort((x,y)=>at(y,null).ovr-at(x,null).ovr).forEach(b=>{let bi=0,bv=-1e9;
+      for(let i=0;i<5;i++){const v=at(b,i).ovr-(chain[i].length-1)*6;if(v>bv){bv=v;bi=i;}}chain[bi].push(b);});
+    const cache=new Map(), attr=(p,i,x)=>{const k=p.id+"|"+i+"|"+x;if(!cache.has(k))cache.set(k,at(p,i,x));return cache.get(k);};
+    return{team,people,chain,attr,score:0,tac:{...DEF_TAC,...(team.tac||{})},trans:false,fbp:0,oreb:0};
+  });
+  // who plays each 4-minute segment (12 per game): S = starter, 1/2/3 = 1st/2nd/3rd backup at that position
+  const PATS={normal:"SS11SSSS12SS",heavy:"SSS1SSSSSSSS",deep:"SS12S2SS31SS"};
+  const ev=[], qs=[];
+  let q=0, clock=0;
+  const fmt=c=>`${Math.floor(c/60)}:${String(Math.floor(c%60)).padStart(2,"0")}`;
+  const push=(side,text,hl)=>{if(log)ev.push({q,clock:fmt(clock),side,text,hl,sa:sides[0].score,sb:sides[1].score});};
+  const avg=(L,k)=>L.reduce((s,x)=>s+x.a[k],0)/5;
+  const lineup=SD=>{const rot=SD.tac.rot, seg=Math.min(2,Math.floor((720-clock-0.01)/240)), g=q<4?q*3+seg:-1;
+    return SD.chain.map((ch,i)=>{
+      const k=g<0?"S":PATS[rot][(g+(i>=3?1:0))%12];   // bigs sub one segment earlier than guards
+      const d=k==="S"?0:Math.min(+k,ch.length-1);
+      const x=d===0&&q>=3?(rot==="heavy"?-4:rot==="deep"?2:0):0;   // Q4: tired or fresh starters
+      return{p:ch[d],a:SD.attr(ch[d],i,x)};});};
+
+  function runPoss(o,d){
+    const OS=sides[o], DS=sides[d], ot=OS.tac, dt=DS.tac;
+    const off=lineup(OS), def=lineup(DS);
+    const tr=OS.trans; OS.trans=false;
+    const PR={slow:[13,25],normal:[9,23],fast:[6,17]}[ot.pace], hi=dt.def==="press"?Math.min(PR[1],17):PR[1];
+    const t=Math.min(clock,tr?4+Math.floor(rand()*5):PR[0]+Math.floor(rand()*(hi-PR[0]+1))); clock-=t;
+    off.forEach(x=>x.p.sec+=t); def.forEach(x=>x.p.sec+=t);
+    const dDef=avg(def,"def"), oPly=avg(off,"ply"), oReb=avg(off,"reb"), dReb=avg(def,"reb");
+    const rp=Math.max(...def.map(x=>x.a.def*.6+x.a.reb*.4));
+    let toP=.125+(dDef-oPly)*.0025+(ot.pace==="fast"?.006:ot.pace==="slow"?-.006:0)+(ot.off==="star"?.005:0)-(tr?.03:0);
+    if(dt.def==="press")toP+=.025+(dDef-oPly)*.002;
+    toP=clamp(toP,.04,.26);
+    const uExp=ot.off==="star"?3.4:2.2, mdW=dt.def==="zone"?.5:1;
+    // "three"/"inside" also steer the ball to the team's best shooters / inside scorers
+    const focus=x=>ot.off==="three"?Math.pow(x.a.thr/75,3):ot.off==="inside"?Math.pow(x.a.ins/75,3):1;
+    for(let tries=0;tries<4;tries++){
+      // turnover
+      if(rand()<toP){
+        const h=pickW(off,x=>Math.pow(x.a.ply,2)); h.p.to++;
+        if(rand()<.55){const s=pickW(def,x=>Math.pow(x.a.def,3));s.p.stl++;if(rand()<.4)DS.trans=true;push(d,`${short(s.p.name)} ขโมยบอลจาก ${short(h.p.name)}!`,rand()<.4);}
+        else push(o,`${short(h.p.name)} เสียการครองบอล`);
+        return;
+      }
+      const sh=pickW(off,x=>Math.pow(Math.max(1,x.a.ovr*.5+Math.max(x.a.thr,x.a.ins)*.5-55),uExp)*focus(x));
+      const md=def[off.indexOf(sh)].a, a=sh.a, P=sh.p;
+      const p3=clamp(clamp((a.thr-50)/90,.02,.6)*(ot.off==="three"?1.45:ot.off==="inside"?.55:1)*(dt.def==="zone"?1.3:1),.01,.8);
+      let type=rand()<p3?"3":(rand()<clamp(.55+(a.ins-a.thr)*.004+(ot.off==="inside"?.15:0),.3,.92)?"rim":"mid");
+      const fb=tr&&tries===0&&rand()<.7; if(fb)type="rim";   // fast break
+      // shot quality = shot skill + overall skill (OVR) − matchup defense − team/rim defense, then plan effects
+      const sk=(a.ovr-75)*.003;
+      let pm;
+      if(type==="3")pm=.355+(a.thr-75)*.0042+sk-(md.def-75)*.0025*mdW-(dDef-75)*.0015;
+      else if(type==="rim")pm=.58+(a.ins-75)*.005+sk-(md.def-75)*.002*mdW-(rp-80)*.003;
+      else pm=.42+((a.thr+a.ins)/2-75)*.0035+sk-(md.def-75)*.003*mdW;
+      pm+=(ot.pace==="slow"?.004:0)+(ot.pace==="fast"&&type==="rim"?.01:0)+(ot.off==="bal"?.01:0)+(fb?.07:0)-(ot.def==="press"?.01:0);
+      if(dt.def==="zone")pm+=type==="3"?.045:type==="rim"?-.05:-.01;
+      if(dt.def==="press"&&type==="rim")pm+=.05;
+      pm=clamp(pm,.1,.88);
+      const fouled=rand()<(type==="rim"?.12:type==="mid"?.05:.02);
+      const made=rand()<pm, val=type==="3"?3:2;
+      const ftp=clamp(.55+(a.thr-50)*.008,.45,.93);
+      const fts=n=>{let m=0;for(let i=0;i<n;i++){P.fta++;if(rand()<ftp){m++;P.ftm++;}}P.pts+=m;OS.score+=m;return m;};
+      if(made){
+        P.fga++;P.fgm++; if(type==="3"){P.tpa++;P.tpm++;}
+        P.pts+=val; OS.score+=val; if(fb)OS.fbp+=val;
+        let as="";
+        if(rand()<(type==="3"?.8:type==="rim"?.55:.45)){const others=off.filter(x=>x!==sh);const ap=pickW(others,x=>Math.pow(x.a.ply,3));ap.p.ast++;as=` (แอสซิสต์: ${short(ap.p.name)})`;}
+        let txt=type==="3"?"ยิงสามแต้ม ลง!":type==="rim"?(a.ins>=86&&rand()<.5?"ดังค์สนั่น!":"เลย์อัพลง"):"จัมพ์ช็อตระยะกลางลง";
+        if(fb)txt="บุกเร็ว "+txt;
+        if(fouled){const m=fts(1);txt+=` + แอนด์วัน ${m?"ลง":"ไม่ลง"}`;}
+        push(o,`${short(P.name)} ${txt}${as}`,type==="3"||txt.includes("ดังค์")||fouled||fb);
+        return;
+      }
+      if(fouled){const n=type==="3"?3:2;const m=fts(n);push(o,`${short(P.name)} โดนฟาวล์ขณะยิง ลูกโทษลง ${m}/${n}`);return;}
+      P.fga++; if(type==="3")P.tpa++;
+      if(type==="rim"&&rand()<.17*Math.pow(rp/85,2)){const b=def.reduce((m,x)=>x.a.def+x.a.reb>m.a.def+m.a.reb?x:m);b.p.blk++;push(d,`${short(b.p.name)} บล็อก ${short(P.name)}!`,true);}
+      else push(o,`${short(P.name)} ${type==="3"?"ยิงสามแต้มไม่ลง":type==="rim"?"บุกใต้แป้นไม่ลง":"จัมพ์ช็อตไม่ลง"}`);
+      if(rand()<clamp(.24+(oReb-dReb)*.009+(ot.reb==="crash"?.06:ot.reb==="back"?-.06:0),.06,.5)){
+        const r=pickW(off,x=>Math.pow(x.a.reb,3));r.p.reb++;OS.oreb++;push(o,`${short(r.p.name)} รีบาวด์เกมรุก`);continue;}
+      const r=pickW(def,x=>Math.pow(x.a.reb,3));r.p.reb++;
+      if(rand()<({crash:.32,normal:.12,back:.04})[ot.reb])DS.trans=true;   // leak-out after a defensive rebound
+      return;
+    }
+  }
+  const jump=rand()<.5?0:1;
+  const G={sides,ev,qs,done:false,a:0,b:0};
+  if(log)ev.push({q:0,clock:"12:00",side:-1,text:`จัมพ์บอล! ${sides[jump].team.name} ได้ครองบอลก่อน`,sys:true,sa:0,sb:0});
+  // play quarters until quarter index n (2 = halftime) or the end of the game
+  G.runTo=n=>{
+    while(!G.done&&q<n){
+      clock=q<4?720:300; sides.forEach(s=>s.trans=false);
+      const a0=sides[0].score,b0=sides[1].score;
+      let o=q<4?(q%2===0?jump:1-jump):(rand()<.5?0:1);
+      while(clock>0){runPoss(o,1-o);o=1-o;}
+      qs.push([sides[0].score-a0,sides[1].score-b0]);
+      if(log)ev.push({q,clock:"0:00",side:-1,sys:true,text:q===1?"จบครึ่งแรก · พักครึ่ง":q<3?`จบควอเตอร์ ${q+1}`:q===3?"จบเวลาปกติ":`จบโอเวอร์ไทม์ ${q-3}`,sa:sides[0].score,sb:sides[1].score});
+      if(q>=3&&sides[0].score!==sides[1].score)G.done=true;
+      q++;
+    }
+    G.a=sides[0].score;G.b=sides[1].score;return G;
+  };
+  return G;
+}
+
+/* ================= GACHA ================= */
+function rollRar(guarantee){
+  if(S.pity>=PITY-1)return"L";
+  const r=rand();let rar=r<.03?"L":r<.15?"E":r<.45?"R":"C";
+  if(guarantee&&(rar==="C"||rar==="R"))rar=rand()<.2?"L":"E";
+  return rar;
+}
+function pullOne(guarantee){
+  const rar=rollRar(guarantee); S.pity=rar==="L"?0:S.pity+1; S.pulls++;
+  const pool=BYRAR[rar], pd=pool[Math.floor(rand()*pool.length)];
+  const kind=addCard(pd);
+  return{pd,kind,stars:S.owned[pd.id].stars,rar};
+}
+// new card, or a duplicate kept as a spare copy (for star-ups or enhancement); coins back once the spare pile is full
+const MAX_SPARES=20;
+function addCard(pd){
+  const o=S.owned[pd.id];
+  if(!o){S.owned[pd.id]={stars:1,n:1,plus:0,spent:0,spares:[]};return"new";}
+  o.n++;
+  if(o.spares.length<MAX_SPARES){o.spares.push({plus:0,spent:0});return"dup";}
+  S.coins+=RAR[pd.rar].refund;return"cash";
+}
+let lastPull=null;
+function doPull(n){
+  const cost=n===1?COST1:COST10;
+  if(S.coins<cost){toast("เหรียญไม่พอ ลองแข่งในลีกเพื่อหาเหรียญเพิ่ม");return;}
+  S.coins-=cost;
+  // decide rarities first so the 10-pull guarantee applies to the last card
+  const res=[];
+  for(let i=0;i<n;i++){
+    const need=n===10&&i===9&&!res.some(r=>r.rar==="E"||r.rar==="L");
+    res.push(pullOne(need));
+  }
+  lastPull=res.map(r=>({...r,open:false}));
+  save(); render();
+}
+
+/* ================= VIEWS ================= */
+let view="gacha", collFilter={rar:"all",pos:"all",own:"all"}, match=null, leagueInfo={};
+function setView(v){view=v;if(v!=="league")stopPlay();render();window.scrollTo(0,0);}
+function header(){userChip();
+  $("#coins").textContent=S.coins.toLocaleString();
+  const r=teamRatings(myTeam()); $("#hovr").textContent=r?r.ovr:"–";
+  document.querySelectorAll("#nav button").forEach(b=>{b.setAttribute("aria-selected",S.starterDone&&(b.dataset.v===view||(view==="match"&&b.dataset.v==="league")));b.disabled=!S.starterDone;});
+}
+function userChip(){
+  const el=$("#userchip"); if(!el)return;
+  const st=cloud.state, me=cloud.me;
+  const sy={loading:"กำลังเชื่อมต่อ…",ok:"เซฟออนไลน์แล้ว",saving:"กำลังเซฟ…",local:"เซฟในเครื่องนี้เท่านั้น",err:"เซฟไม่สำเร็จ"}[st];
+  el.innerHTML=(me&&me.id?`<img alt="" src="${esc(me.avatarUrl)}"><span class="un"></span>`:"")+`<span class="sy ${st==="local"||st==="err"?"bad":""}">${sy}</span>`;
+  if(me&&me.id)el.querySelector(".un").textContent=me.name||"ผู้เล่น";
+  const n=$("#savenote"); if(n&&st!=="loading")n.textContent=cloud.ref?"ความคืบหน้าผูกกับบัญชี claude.ai เล่นต่อได้ทุกเครื่อง":"ความคืบหน้าเก็บในเบราว์เซอร์นี้";
+  el.title=st==="local"?"ไม่ได้ล็อกอินหรือไม่มีสิทธิ์บันทึก ความคืบหน้าจะอยู่แค่ในเบราว์เซอร์นี้":"ความคืบหน้าผูกกับบัญชี เปิดจากเครื่องไหนก็เล่นต่อได้";
+}
+function render(){
+  header();
+  const m=$("#main");
+  if(cloud.state==="loading"){m.innerHTML=`<div class="loading">กำลังโหลดเซฟของคุณ…</div>`;return;}
+  if(!S.starterDone)m.innerHTML=vStarter();
+  else if(view==="gacha")m.innerHTML=vGacha();
+  else if(view==="team")m.innerHTML=vTeam();
+  else if(view==="coll")m.innerHTML=vColl();
+  else if(view==="enh")m.innerHTML=vEnh();
+  else if(view==="market")m.innerHTML=vMarket();
+  else if(view==="league")m.innerHTML=vLeague();
+  else if(view==="match")m.innerHTML=vMatch();
+}
+
+function revealHTML(doneBtn){
+  return `<div class="reveal" id="reveal">${lastPull.map((r,i)=>{
+      const badge=r.kind==="new"?`<span class="badge">NEW</span>`:r.kind==="dup"?`<span class="badge up">ใบซ้ำ</span>`:`<span class="badge cash">+${RAR[r.rar].refund}</span>`;
+      return `<div class="flip glow-${r.rar}${r.open?" open":""}" data-flip="${i}" tabindex="0" role="button" aria-label="เปิดการ์ดใบที่ ${i+1}">
+        <div class="fi"><div class="back"><span>HG</span></div><div class="front">${cardHTML(r.pd,r.stars,{badge})}</div></div></div>`;}).join("")}</div>
+      <div class="reveal-bar">${lastPull.some(r=>!r.open)?`<button class="btn" id="openAll">เปิดทั้งหมด</button>`:doneBtn}</div>`;
+}
+
+/* ================= STARTER DRAFT ================= */
+// first launch: free draws until the player owns STARTER_N different players (no duplicates, at least 2 per position)
+const STARTER_N=20, STARTER_PER_POS=2;
+function starterPull(){
+  const have=Object.keys(S.owned).length; if(have>=STARTER_N)return;
+  const n=Math.min(10,STARTER_N-have), res=[];
+  for(let k=0;k<n;k++){
+    const left=STARTER_N-Object.keys(S.owned).length;
+    const need=POS.filter(p=>PL.filter(x=>x.poss.includes(p)&&S.owned[x.id]).length<STARTER_PER_POS);
+    const needSlots=need.reduce((s,p)=>s+STARTER_PER_POS-PL.filter(x=>x.poss.includes(p)&&S.owned[x.id]).length,0);
+    const mustFill=needSlots>=left;
+    let rar=rollRar(k===n-1&&!res.some(r=>r.rar==="E"||r.rar==="L"));
+    let pool=PL.filter(x=>x.rar===rar&&!S.owned[x.id]&&(!mustFill||x.poss.some(q=>need.includes(q))));
+    if(!pool.length)pool=PL.filter(x=>!S.owned[x.id]&&(!mustFill||x.poss.some(q=>need.includes(q))));
+    const pd=pool[Math.floor(rand()*pool.length)];
+    addCard(pd); res.push({pd,kind:"new",stars:1,rar:pd.rar,open:false});
+  }
+  lastPull=res; save(); render();
+}
+function finishStarter(){S.starterDone=true;lastPull=null;autoLineup();save();setView("team");toast("จัดทีมให้อัตโนมัติแล้ว ปรับได้ตามใจ");}
+function vStarter(){
+  const have=Object.keys(S.owned).length, done=have>=STARTER_N;
+  let h=`<section class="banner starter"><div>
+    <div class="eyebrow">ยินดีต้อนรับ · แพ็กเริ่มต้นฟรี</div>
+    <h2>เลือกทีมแรก<br><em>${STARTER_N} คน</em> ไม่ซ้ำกัน</h2>
+    <p class="sub" style="margin:6px 0 0">ก่อนเริ่มเล่น สุ่มนักบาสให้ครบ ${STARTER_N} คน ไม่มีการ์ดซ้ำ และได้อย่างน้อยตำแหน่งละ ${STARTER_PER_POS} คน ทุก 10 ใบการันตี Epic ขึ้นไป 1 ใบ</p>
+    <div class="startprog"><span class="n">${have}</span> / ${STARTER_N} คน<div class="pitybar"><i style="width:${have/STARTER_N*100}%"></i></div></div>
+    <div class="pullbtns">${done?(lastPull&&lastPull.some(r=>!r.open)?"":`<button class="btn primary" id="starterDone">เริ่มเล่น · จัดทีมให้อัตโนมัติ →</button>`)
+      :(lastPull&&lastPull.some(r=>!r.open)?"":`<button class="btn gold" id="starterPull">สุ่ม ${Math.min(10,STARTER_N-have)} ใบ · ฟรี</button>`)}</div>
+  </div><div class="startpos">${POS.map(p=>{const c=PL.filter(x=>x.poss.includes(p)&&S.owned[x.id]).length;return `<div class="${c>=STARTER_PER_POS?"ok":""}"><b>${p}</b><span>${c}</span></div>`;}).join("")}</div></section>`;
+  if(lastPull)h+=revealHTML(done?`<button class="btn primary" id="starterDone">เริ่มเล่น · จัดทีมให้อัตโนมัติ →</button>`:`<button class="btn gold" id="starterPull">สุ่มอีก ${Math.min(10,STARTER_N-have)} ใบ · ฟรี</button>`);
+  return h;
+}
+
+function vGacha(){
+  const show=["michaeljordan","stephencurry","nikolajokic"].map(id=>cardHTML(BYID[id],1)).join("");
+  const left=PITY-S.pity;
+  const now=Date.now(), ready=now>=S.bonusAt, mins=Math.ceil((S.bonusAt-now)/60000);
+  let html=`<section class="banner">
+    <div>
+      <div class="eyebrow">แพ็กการ์ดนักบาส · ${PL.length} ผู้เล่น</div>
+      <h2>เปิดแพ็ก<br>สร้าง <em>ซูเปอร์ทีม</em></h2>
+      <p class="sub" style="margin:6px 0 0">สุ่มการ์ด จัด 5 ตัวจริง + 3 ตัวสำรอง แล้วจำลองการแข่งขันไต่ลีกไปจนถึงทีมตำนานตลอดกาล การ์ดซ้ำเก็บไว้ใช้อัปดาว (+2 ทุกค่าพลัง สูงสุด ★5) หรือเป็นวัตถุดิบตีบวก</p>
+      <div class="rates">${["L","E","R","C"].map(k=>`<span class="rate" style="--rc:var(--c-${{L:"legend",E:"epic",R:"rare",C:"common"}[k]})">${RAR[k].name} ${(RAR[k].rate*100).toFixed(0)}%</span>`).join("")}</div>
+      <div class="pullbtns">
+        <button class="btn primary" data-pull="1">เปิด 1 ใบ <span class="price"><span class="coin"></span>${COST1}</span></button>
+        <button class="btn gold" data-pull="10">เปิด 10 ใบ <span class="price"><span class="coin"></span>${COST10}</span></button>
+        <button class="btn" id="bonusBtn" ${ready?"":"disabled"}>${ready?"รับโบนัสฟรี +300":`โบนัสถัดไปใน ${mins} นาที`}</button>
+      </div>
+      <div class="pity">เปิด 10 ใบ การันตี Epic ขึ้นไปอย่างน้อย 1 ใบ · การันตี Legendary ในอีก <b>${left}</b> ครั้ง
+        <div class="pitybar"><i style="width:${(S.pity/PITY*100).toFixed(0)}%"></i></div></div>
+    </div>
+    <div class="showcase" aria-hidden="true">${show}</div>
+  </section>`;
+  if(lastPull){
+    html+=revealHTML(`<button class="btn" data-goto="team">ไปจัดทีม →</button>`);
+  }else{
+    html+=`<p class="sub" style="text-align:center;margin-top:26px">เริ่มต้นด้วย ${START_COINS.toLocaleString()} เหรียญ — ลองเปิด 10 ใบเพื่อเริ่มสร้างทีม</p>`;
+  }
+  return html;
+}
+
+function vTeam(){
+  const t=myTeam(), r=teamRatings(t), bm=activeBonus();
+  const pos=[[50,64],[84,34],[16,34],[33,3],[67,3]]; // PG,SG,SF,PF,C as left%,top%
+  const slotHTML=i=>{
+    const id=S.lineup[i];
+    if(id&&S.owned[id]){const pd=BYID[id],e=eff(pd,withB(id,bm),i<5?i:null);
+      const lbl=i<5?`<span class="lbl${e.pen?" pen":""}">${POS[i]}${e.pen?` −${e.pen}`:""}</span>`:`<span class="lbl">สำรอง</span>`;
+      return cardHTML(pd,withB(id,bm),{e,click:true,attrs:`data-slot="${i}"`})+lbl;}
+    return `<div class="empty" data-slot="${i}" tabindex="0" role="button">${i<5?POS[i]:"+"}<small>${i<5?"เลือกผู้เล่น":"สำรอง"}</small></div>`;
+  };
+  const count=Object.keys(S.owned).length;
+  return `<h2>ทีมของฉัน</h2><p class="sub">แตะช่องเพื่อเลือกการ์ด · เล่นผิดตำแหน่งจะโดนลดค่าพลัง 4 ต่อหนึ่งตำแหน่งที่ห่าง · ผู้เล่นคนเดียวกันอยู่ในทีมได้แค่ใบเดียว (ใบหลัก) ใบซ้ำใช้อัปดาวหรือตีบวกเท่านั้น</p>
+  <div class="teamgrid">
+    <div>
+      <div class="court"><span class="hoop"></span>${[0,1,2,3,4].map(i=>`<div class="slot" style="left:${pos[i][0]}%;top:${pos[i][1]}%">${slotHTML(i)}</div>`).join("")}</div>
+      <div class="benchwrap"><div class="benchhead"><span class="eyebrow">ม้านั่งสำรอง</span><span class="benchcount ${benchCount()<BENCH_MIN?"bad":""}">${benchCount()} / ${BENCH_MAX} คน · ต้องมีอย่างน้อย ${BENCH_MIN}</span></div>
+        <p class="note" style="margin:0 0 10px">ตัวสำรองแต่ละคนจะเป็นตัวแทนของตำแหน่งที่เขาถนัด · ตัวแทนคนแรกของแต่ละตำแหน่งลงเล่นราว 12 นาที คนถัดไปน้อยลง</p>
+        <div class="benchrow">${Array.from({length:BENCH_MAX},(_,k)=>`<div>${slotHTML(5+k)}</div>`).join("")}</div></div>
+    </div>
+    <div class="panel">
+      ${r?`<div class="eyebrow">ความแกร่งของทีม</div><div class="bigovr"><span class="n">${r.ovr}</span><span class="note">OVR ทีม = เฉลี่ยตัวจริง 5 คน (82%) + เฉลี่ยสำรอง 5 คนที่ OVR สูงสุด (18%) · แถบด้านล่างคิดจากตัวจริง</span></div>
+      <div class="ratings">${[["OFF",r.off,"เกมรุก"],["DEF",r.def,"เกมรับ"],["REB",r.reb,"รีบาวด์"],["PLY",r.ply,"การจ่ายบอล"],["3PT",r.thr,"สามแต้ม"]].map(([k,v])=>`<div class="rt"><b>${k}</b><div class="bar"><i style="width:${clamp((v-40)/59*100,3,100)}%"></i></div><span>${v}</span></div>`).join("")}</div>`
+      :`<div class="eyebrow">ยังไม่ครบทีม</div><p>จัดตัวจริงให้ครบทั้ง 5 ตำแหน่งเพื่อดูค่าทีม</p>`}
+      ${rosterIssue()?`<p class="benchwarn">ยังลงแข่งไม่ได้: ${rosterIssue()}</p>`:""}
+      <div class="note" style="margin-top:16px">จัดทีมอัตโนมัติแบบ (ยังจัดตามตำแหน่ง แต่เลือกคนที่เก่งด้านนี้ก่อน)</div>
+      <div class="filters" style="margin:6px 0 0">${Object.entries(AUTO_F).map(([k,l])=>`<button class="fbtn" data-autof="${k}" aria-pressed="${(S.autoF||"ovr")===k}">${l}</button>`).join("")}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn primary" id="autoBtn" ${count?"":"disabled"}>จัดทีมอัตโนมัติ${S.autoF&&S.autoF!=="ovr"?" · "+AUTO_F[S.autoF]:""}</button>
+        ${!rosterIssue()?`<button class="btn" data-goto="league">ไปแข่งขัน →</button>`:""}
+      </div>
+      <p class="note" style="margin-top:14px">ในเกมจำลอง ผู้เล่นที่อยู่ในสนามจะประกบคู่ตำแหน่งเดียวกันของอีกทีม ค่า DEF ของคนประกบลด % ยิงลงของคู่แข่ง (ถ้าเล่นโซน ผลนี้เหลือครึ่งเดียว) คนที่ DEF/REB สูงสุดในสนามจะคุมใต้แป้น และ DEF ทีมที่สูงกว่า PLY ของคู่แข่งทำให้คู่แข่งเสียบอลบ่อยขึ้น</p>
+      <p class="note">สะสมผู้เล่นแล้ว ${count} / ${PL.length} คน</p>
+    </div>
+  </div>
+  <div class="rosterbox"><h3>รายชื่อทีมและค่าพลัง</h3><table><thead><tr><th>ช่อง</th><th>ผู้เล่น</th><th>OVR</th>${ATTR.map(k=>`<th>${ATTR_LBL[k]}</th>`).join("")}</tr></thead><tbody>
+  ${Array.from({length:LINEUP_N},(_,i)=>i).map(i=>{const id=S.lineup[i], lab=`<td class="slotlbl">${i<5?POS[i]:"สำรอง "+(i-4)}</td>`;
+    if(!id||!S.owned[id])return `<tr class="rowclick" data-slot="${i}">${lab}<td colspan="7" class="note">ว่าง — แตะเพื่อเลือกผู้เล่น</td></tr>`;
+    const pd=BYID[id],e=eff(pd,withB(id,bm),i<5?i:null);
+    return `<tr class="rowclick" data-slot="${i}">${lab}<td><span class="dot" style="--rc:var(--c-${RC[pd.rar]})"></span>${esc(pd.name)} <span class="note">${pd.posTxt}${lvTxt(S.owned[id])}</span>${e.pen?`<span class="penx">ผิดตำแหน่ง −${e.pen}</span>`:""}${bm[id]?`<span class="combox">คอมโบ +${bm[id]}</span>`:""}</td>
+      <td class="o">${e.ovr}</td>${ATTR.map(k=>`<td class="n ${sv(e[k])}">${e[k]}</td>`).join("")}</tr>`;}).join("")}
+  </tbody></table></div>
+  ${comboPanel()}`;
+}
+function comboPanel(){
+  const inTeam=new Set(S.lineup.filter(id=>id&&S.owned[id]));
+  const rows=COMBOS.map(c=>({c,t:c.ids.filter(id=>inTeam.has(id)).length,o:c.ids.filter(id=>S.owned[id]).length}))
+    .sort((a,b)=>(b.t===b.c.ids.length)-(a.t===a.c.ids.length)||b.t-a.t||b.o-a.o||b.c.ids.length-a.c.ids.length);
+  const act=rows.filter(r=>r.t===r.c.ids.length).length;
+  return `<div class="rosterbox combobox"><h3>คอมโบทีม <span class="note">ใช้งาน ${act} ชุด</span></h3>
+    <p class="note" style="margin:0 8px 10px">ใส่ผู้เล่นจากทีมและฤดูกาลเดียวกันให้ครบชุดใน 15 คน (ตัวจริงหรือสำรองก็ได้) สมาชิกทุกคนในชุดได้ค่าพลังทุกด้าน +2 · ชุด 4 คนขึ้นไปได้ +3</p>
+    <div class="combolist">${rows.map(({c,t,o})=>{const on=t===c.ids.length;
+      return `<div class="combo${on?" on":""}"><div class="ch"><b>${esc(c.name)}</b><span>${on?`ใช้งาน · +${comboBonus(c)}`:`${t}/${c.ids.length} ในทีม · โบนัส +${comboBonus(c)}`}</span></div>
+        <div class="cm">${c.ids.map(id=>`<span class="${inTeam.has(id)?"in":S.owned[id]?"own":"miss"}" title="${inTeam.has(id)?"อยู่ในทีม":S.owned[id]?"มีการ์ดแต่ยังไม่ได้ใส่ทีม":"ยังไม่มีการ์ด"}">${esc(short(BYID[id].name))}</span>`).join("")}</div></div>`;}).join("")}</div>
+    <p class="note" style="margin:8px 8px 6px"><span class="lg in">อยู่ในทีม</span> <span class="lg own">มีการ์ด ยังไม่ใส่ทีม</span> <span class="lg miss">ยังไม่มี</span></p></div>`;
+}
+const RC={L:"legend",E:"epic",R:"rare",C:"common"};
+const sv=v=>v>=90?"s-hi":v>=80?"s-gd":v<60?"s-lo":"";
+const lvTxt=o=>(o.stars>1?" · "+"★".repeat(o.stars):"")+(o.plus?" · +"+o.plus:"")+(o.spares&&o.spares.length?` · ซ้ำ ×${o.spares.length}`:"");
+// focus: "ovr" = best overall; otherwise blend OVR with one stat so the lineup leans that way
+const AUTO_F={ovr:"สมดุล (OVR)",thr:"เน้น 3PT",ins:"เน้นใต้แป้น",def:"เน้นเกมรับ",reb:"เน้นรีบาวด์",ply:"เน้นจ่ายบอล"};
+const autoScore=(e,f)=>f==="ovr"?e.ovr:e.ovr*.4+e[f]*.6;
+// extra out-of-position cost keeps starters in their real positions
+function autoLineup(f){
+  f=AUTO_F[f]?f:(S.autoF||"ovr"); S.autoF=f;
+  const ids=Object.keys(S.owned); const L=Array(LINEUP_N).fill(null); const used=new Set();
+  for(let n=0;n<5;n++){let best=null;
+    ids.forEach(id=>{if(used.has(id))return;for(let s=0;s<5;s++){if(L[s])continue;const e=eff(BYID[id],S.owned[id],s), v=autoScore(e,f)-(e.pen||0)*3;if(!best||v>best.v)best={id,s,v};}});
+    if(!best)break;L[best.s]=best.id;used.add(best.id);}
+  const sc=id=>autoScore(eff(BYID[id],S.owned[id]),f);
+  ids.filter(id=>!used.has(id)).sort((a,b)=>sc(b)-sc(a)).slice(0,BENCH_MAX).forEach((id,i)=>L[5+i]=id);
+  S.lineup=L;save();render();toast(f==="ovr"?"จัดทีมที่ดีที่สุดให้แล้ว":`จัดทีมแบบ${AUTO_F[f]}ให้แล้ว`);
+}
+function openPicker(slot){
+  const ids=Object.keys(S.owned);
+  pickerSlot=slot;
+  const RO={L:0,E:1,R:2,C:3};
+  // default: position (own slot's position first, then nearest) → rarity (L→C) → stat (OVR at this slot)
+  const pkey=p=>slot<5?posDist(p,slot)*10+POS.indexOf(p.pos):POS.indexOf(p.pos);
+  const rows=ids.map(id=>({id,e:eff(BYID[id],S.owned[id],slot<5?slot:null)})).sort((a,b)=>{
+    const A=BYID[a.id],B=BYID[b.id];
+    if(pickSort==="default"){const d=pkey(A)-pkey(B);if(d)return d;const r=RO[A.rar]-RO[B.rar];if(r)return r;}
+    return b.e.ovr-a.e.ovr||RO[A.rar]-RO[B.rar];});
+  const hdr=ri=>{if(pickSort!=="default")return"";const P=BYID[rows[ri].id],p=P.pos;if(ri&&pkey(BYID[rows[ri-1].id])===pkey(P))return"";
+    const n=rows.filter(r=>pkey(BYID[r.id])===pkey(P)).length, pen=slot<5?posDist(P,slot)*4:0;
+    return `<div class="pgrp">${p}${slot<5&&!pen&&p!==POS[slot]?` → ${POS[slot]}`:""}<span>${n} คน${slot<5?(pen?` · ผิดตำแหน่ง −${pen}`:" · ตรงตำแหน่ง"):""}</span></div>`;};
+  const cur=S.lineup[slot];
+  $("#modalRoot").innerHTML=`<div class="modal" id="modal"><div class="sheet" role="dialog" aria-label="เลือกผู้เล่น">
+    <div class="sheethead"><h2 style="font-size:28px">เลือก${slot<5?"ตัวจริง "+POS[slot]:"ตัวสำรอง"}</h2>
+    <div style="display:flex;gap:8px">${cur?`<button class="btn sm" data-clear="${slot}">ถอดออก</button>`:""}<button class="btn sm" id="closeModal">ปิด</button></div></div>
+    ${cur?`<p class="note" style="margin:-6px 0 12px">ตัวเลข ▲▼ คือค่าที่เปลี่ยนเมื่อเทียบกับ ${esc(BYID[cur].name)} ที่อยู่ช่องนี้ตอนนี้</p>`:`<p class="note" style="margin:-6px 0 12px">ค่าพลังทั้งหมดหักค่าผิดตำแหน่งแล้ว</p>`}
+    <div class="filters"><span class="note">เรียงตาม:</span>
+      <button class="fbtn" data-psort="default" aria-pressed="${pickSort==="default"}">ตำแหน่ง → ระดับการ์ด → ค่าพลัง</button>
+      <button class="fbtn" data-psort="ovr" aria-pressed="${pickSort==="ovr"}">OVR สูงสุด</button></div>
+    ${rows.length?`<div class="plist">${rows.map((r,ri)=>{const where=S.lineup.indexOf(r.id), pd=BYID[r.id], st=S.owned[r.id].stars;
+      const ce=cur&&cur!==r.id?eff(BYID[cur],S.owned[cur],slot<5?slot:null):null;
+      const df=k=>{if(!ce)return"<i></i>";const d=r.e[k]-ce[k];return d>0?`<i class="up">▲${d}</i>`:d<0?`<i class="dn">▼${-d}</i>`:"<i></i>";};
+      return hdr(ri)+`<button class="prow${where===slot?" cur":""}" data-pick="${r.id}" data-to="${slot}" style="--rc:var(--c-${RC[pd.rar]});--h:${pd.hue}">
+        <span class="mini-av">${pd.ini}</span>
+        <span class="pn"><b>${esc(pd.name)}</b><small>${pd.posTxt} · ${RAR[pd.rar].name} · ${esc(pd.teamTxt)}${lvTxt(S.owned[r.id])}
+          ${r.e.pen?` · <span class="bad">ผิดตำแหน่ง −${r.e.pen}</span>`:""}
+          ${where>=0?` · <span class="use">${where===slot?"อยู่ช่องนี้":"อยู่ใน "+(where<5?POS[where]:"สำรอง")+" (จะสลับ)"}</span>`:""}</small></span>
+        <span class="povr">${r.e.ovr}${ce?`<i class="${r.e.ovr>ce.ovr?"up":r.e.ovr<ce.ovr?"dn":""}" style="display:block;font-style:normal;font-size:14px">${r.e.ovr>ce.ovr?"▲"+(r.e.ovr-ce.ovr):r.e.ovr<ce.ovr?"▼"+(ce.ovr-r.e.ovr):""}</i>`:"<span>OVR</span>"}</span>
+        <span class="pst">${ATTR.map(k=>`<div class="${sv(r.e[k])}">${r.e[k]}<span>${ATTR_LBL[k]}</span>${df(k)}</div>`).join("")}</span>
+      </button>`;}).join("")}</div>`
+      :`<p class="sub">ยังไม่มีการ์ด ไปเปิดแพ็กก่อนนะ</p>`}
+  </div></div>`;
+}
+let pickSort="default", pickerSlot=0;
+function closeModal(){$("#modalRoot").innerHTML="";}
+// a player can be in the team only once, whichever copy: moving him swaps slots instead of adding a second copy
+function assign(id,slot){
+  const from=S.lineup.indexOf(id); const prev=S.lineup[slot];
+  if(from>=0)S.lineup[from]=prev||null;
+  S.lineup=S.lineup.map((x,i)=>i!==slot&&x===id?null:x);
+  S.lineup[slot]=id; save(); closeModal(); render();
+}
+
+function vColl(){
+  const f=collFilter;
+  const list=PL.filter(p=>(f.rar==="all"||p.rar===f.rar)&&(f.pos==="all"||p.poss.includes(f.pos))&&(f.own==="all"||(f.own==="have"?S.owned[p.id]:f.own==="star"?canStar(S.owned[p.id]):!S.owned[p.id])));
+  const have=Object.keys(S.owned).length;
+  const fb=(k,v,l)=>`<button class="fbtn" data-f="${k}" data-fv="${v}" aria-pressed="${f[k]===v}">${l}</button>`;
+  return `<h2>คอลเลกชัน</h2><p class="sub"><span class="progress">${have} / ${PL.length}</span> ใบ · การ์ดที่ยังไม่มีจะแสดงเป็นสีจาง · ใช้ใบซ้ำอัปดาวใบหลักได้ที่นี่ (+2 ทุกค่าพลังต่อดาว สูงสุด ★5)</p>
+  <div class="filters">${fb("rar","all","ทุกระดับ")}${["L","E","R","C"].map(k=>fb("rar",k,RAR[k].name)).join("")}</div>
+  <div class="filters">${fb("pos","all","ทุกตำแหน่ง")}${POS.map(p=>fb("pos",p,p)).join("")}<span style="width:10px"></span>${fb("own","all","ทั้งหมด")}${fb("own","have","มีแล้ว")}${fb("own","need","ยังไม่มี")}${fb("own","star","อัปดาวได้")}</div>
+  <div class="grid">${list.map(p=>{const o=S.owned[p.id];
+    return `<div class="citem">${cardHTML(p,o||1,{locked:!o})}${canStar(o)?`<button class="btn sm gold" data-star="${p.id}">อัปดาว ★${o.stars}→★${o.stars+1}</button><span class="cnote">ใช้ใบซ้ำ 1 จาก ${o.spares.length} ใบ</span>`:o&&o.spares.length?`<span class="cnote">ดาวเต็ม · ใบซ้ำ ${o.spares.length} ใบ</span>`:""}</div>`;}).join("")||`<p class="sub">ไม่มีการ์ดตามตัวกรองนี้</p>`}</div>`;
+}
+
+function vLeague(){
+  const me=myTeam(), r=teamRatings(me);
+  let h=`<h2>ลีก & แข่งขัน</h2><p class="sub">ชนะเพื่อปลดล็อกด่านถัดไปและรับเหรียญ · ชนะครั้งแรกในแต่ละด่านได้โบนัสก้อนใหญ่</p>
+  <div class="record"><div class="chip"><small>สถิติ</small>${S.w}W – ${S.l}L</div><div class="chip"><small>ทีมคุณ</small>${r?r.ovr:"ยังไม่ครบ"}</div><div class="chip"><small>ผ่านแล้ว</small>${S.cleared}/${STAGES.length}</div></div>`;
+  const issue=rosterIssue();
+  if(issue)h+=`<div class="panel" style="margin-bottom:16px">ยังลงแข่งไม่ได้: ${issue} <button class="btn sm primary" data-goto="team" style="margin-left:8px">ไปจัดทีม</button></div>`;
+  h+=`<details class="panel tacpanel" ${S.tacOpen===false?"":"open"} id="tacDetails"><summary><span class="eyebrow">แผนการเล่นของคุณ</span> <span class="note">${tacSummary(S.tac)}</span></summary>
+    <p class="note" style="margin:8px 0 12px">ใช้กับทุกเกมที่แข่ง และปรับเพิ่มได้ตอนพักครึ่ง · กด "จำลอง 100 เกม" เพื่อทดสอบว่าแผนไหนได้ผลกับคู่แข่งแต่ละทีม</p>
+    ${tacHTML(S.tac,"data-tac")}</details>`;
+  h+=`<div class="stages">${STAGES.map((sg,i)=>{
+    const t=stageTeam(i), tr={ovr:sg.t}, locked=i>S.cleared, cleared=i<S.cleared, info=leagueInfo[i]||{};
+    const winC=20+(i+1)*15, first=400+(i+1)*100;
+    return `<div class="stage${locked?" locked":""}${cleared?" cleared":""}">
+      <div class="no">${cleared?"✓":i+1}</div>
+      <div><div class="nm">${sg.name} <span class="note">· ${sg.th}</span></div>
+        <div class="meta"><span>OVR <b>${tr.ovr}</b></span><span>ชนะ +${winC}</span>${cleared?"":`<span>ผ่านครั้งแรก +${first}</span>`}</div>
+        <div class="meta"><span>แผน: ${tacSummary(sg.tac)}</span></div></div>
+      <div class="acts">
+        <button class="btn sm" data-roster="${i}">${info.show?"ซ่อนทีม":"ดูทีม"}</button>
+        <button class="btn sm" data-odds="${i}" ${issue||locked?"disabled":""}>จำลอง 100 เกม</button>
+        <button class="btn sm primary" data-play="${i}" ${issue||locked?"disabled":""}>แข่ง</button>
+      </div>
+      ${info.odds!=null?`<div class="wpct">โอกาสชนะของคุณ <b>${info.odds}%</b> · แต้มเฉลี่ย ${info.avg}<div class="bar"><i style="width:${info.odds}%"></i></div></div>`:""}
+      ${info.show&&tacHints(sg.tac).length?`<div class="hints" style="grid-column:1/-1">${tacHints(sg.tac).map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
+      ${info.show?`<div class="roster">${[...t.starters,...t.bench].map((c,k)=>cardHTML(c.pd,c.stars,{e:eff(c.pd,c,k<5?k:null,t.adj)})).join("")}</div>`:""}
+    </div>`;}).join("")}</div>`;
+  return h;
+}
+function runOdds(i){
+  const me=myTeam(), op=stageTeam(i); let w=0,pa=0,pb=0;
+  for(let n=0;n<100;n++){const g=simulate(me,op,false);if(g.a>g.b)w++;pa+=g.a;pb+=g.b;}
+  leagueInfo[i]=Object.assign(leagueInfo[i]||{},{odds:w,avg:`${Math.round(pa/100)}–${Math.round(pb/100)}`});render();
+}
+
+/* ---------- match playback ---------- */
+let timer=null;
+function stopPlay(){if(timer){clearInterval(timer);timer=null;}}
+function startMatch(i){
+  const me=myTeam(), op=stageTeam(i);
+  const g=makeGame(me,op,true); g.runTo(2);   // first half; the plan can change at halftime
+  match={g,i,shown:0,speed:120,half:false,done:false,tac:{...S.tac},opTac:op.tac,opName:STAGES[i].name,opOvr:STAGES[i].t,myOvr:teamRatings(me).ovr};
+  view="match";render();play();
+}
+function play(){stopPlay();if(!match||match.done||match.half)return;timer=setInterval(step,match.speed);}
+function step(){
+  if(!match)return stopPlay();
+  match.shown++;
+  if(match.shown>=match.g.ev.length){match.shown=match.g.ev.length;stopPlay();
+    if(!match.g.done){match.half=true;render();return;}
+    finishMatch();return;}
+  updateBoard();
+}
+function skipAhead(){
+  stopPlay(); match.shown=match.g.ev.length;
+  if(!match.g.done){match.half=true;render();}else finishMatch();
+}
+function secondHalf(skip){
+  const g=match.g; g.sides[0].tac={...match.tac}; g.runTo(Infinity); match.half=false;
+  if(skip){match.shown=g.ev.length;finishMatch();return;}
+  render();play();
+}
+function finishMatch(){
+  const g=match.g, i=match.i, won=g.a>g.b;
+  const reward=won?20+(i+1)*15:10; let firstBonus=0;
+  if(won&&i===S.cleared&&S.cleared<STAGES.length){firstBonus=400+(i+1)*100;S.cleared++;}
+  S.coins+=reward+firstBonus; won?S.w++:S.l++; save();
+  Object.assign(match,{won,reward,firstBonus,done:true}); render();
+}
+function updateBoard(){
+  const e=match.g.ev[match.shown-1]||{q:0,clock:"12:00",sa:0,sb:0};
+  const qn=e.q<4?`Q${e.q+1}`:`OT${e.q-3}`;
+  const sa=$("#sa"),sb=$("#sb");if(!sa)return;
+  sa.textContent=e.sa;sb.textContent=e.sb;$("#qq").textContent=qn;$("#cc").textContent=e.clock;
+  $("#feed").innerHTML=feedHTML();
+}
+function feedHTML(){
+  const evs=match.g.ev.slice(0,match.shown).slice(-60).reverse();
+  return evs.map(e=>`<div class="ev ${e.sys?"sys":"s"+e.side}${e.hl?" hl":""}"><span class="tt">${e.q<4?"Q"+(e.q+1):"OT"} ${e.clock}</span><span>${esc(e.text)}</span><span class="ss">${e.sa}-${e.sb}</span></div>`).join("");
+}
+function boxHTML(side,title){
+  const rows=side.people.slice().sort((a,b)=>(b.starter-a.starter)||b.sec-a.sec);
+  return `<h3>${esc(title)}</h3><table><thead><tr><th>ผู้เล่น</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>FG</th><th>3P</th><th>FT</th><th>TO</th></tr></thead><tbody>
+  ${rows.map(p=>`<tr><td class="pl">${esc(p.name)}<small>${p.pd.posTxt}${p.starter?"":" · สำรอง"}</small></td><td>${Math.round(p.sec/60)}</td><td><b>${p.pts}</b></td><td>${p.reb}</td><td>${p.ast}</td><td>${p.stl}</td><td>${p.blk}</td><td>${p.fgm}-${p.fga}</td><td>${p.tpm}-${p.tpa}</td><td>${p.ftm}-${p.fta}</td><td>${p.to}</td></tr>`).join("")}</tbody></table>`;
+}
+function teamStatsHTML(g,title){
+  const s=g.sides.map(sd=>{const t={pts:sd.score,fgm:0,fga:0,tpm:0,tpa:0,reb:0,ast:0,to:0,stl:0};sd.people.forEach(p=>{for(const k in t)if(k!=="pts")t[k]+=p[k];});t.fbp=sd.fbp;t.oreb=sd.oreb;return t;});
+  const pct=(m,a)=>a?Math.round(m/a*100)+"%":"–";
+  const rows=[["แต้ม",x=>x.pts],["ยิง FG",x=>`${x.fgm}/${x.fga} (${pct(x.fgm,x.fga)})`],["สามแต้ม",x=>`${x.tpm}/${x.tpa} (${pct(x.tpm,x.tpa)})`],["รีบาวด์ (เกมรุก)",x=>`${x.reb} (${x.oreb})`],["แอสซิสต์",x=>x.ast],["เสียการครองบอล",x=>x.to],["ขโมยบอล",x=>x.stl],["แต้มจากบุกเร็ว",x=>x.fbp]];
+  return `<div class="box"><h3>${title}</h3><table><thead><tr><th></th><th>ทีมของคุณ</th><th>${esc(match.opName)}</th></tr></thead><tbody>${rows.map(([l,f])=>`<tr><td>${l}</td><td>${f(s[0])}</td><td>${f(s[1])}</td></tr>`).join("")}</tbody></table></div>`;
+}
+function vMatch(){
+  if(!match)return vLeague();
+  const g=match.g, e=match.done?{q:g.qs.length-1,clock:"0:00",sa:g.a,sb:g.b}:(g.ev[match.shown-1]||{q:0,clock:"12:00",sa:0,sb:0});
+  const qn=match.half?"HALF":e.q<4?`Q${e.q+1}`:`OT${e.q-3}`;
+  let h=`<div class="board">
+    <div class="tm"><span class="tn">ทีมของคุณ</span><span class="to">OVR ${match.myOvr}</span><span class="sc" id="sa">${e.sa}</span></div>
+    <div class="clock"><div class="q" id="qq">${match.done?"FINAL":qn}</div><div class="t" id="cc">${e.clock}</div></div>
+    <div class="tm r"><span class="tn">${esc(match.opName)}</span><span class="to">OVR ${match.opOvr}</span><span class="sc" id="sb">${e.sb}</span></div>
+  </div>
+  <div class="tacline"><span><b>แผนคุณ:</b> ${tacSummary(match.done||!match.half?g.sides[0].tac:match.tac)}</span><span><b>แผนคู่แข่ง:</b> ${tacSummary(match.opTac)}</span></div>`;
+  if(match.done){
+    const ws=match.won?g.sides[0]:g.sides[1];
+    const gs=p=>p.pts+p.reb*1.2+p.ast*1.5+p.stl*2+p.blk*2-p.to;
+    const mvp=ws.people.reduce((m,p)=>gs(p)>gs(m)?p:m);
+    h+=`<div class="lines"><table><thead><tr><th>ทีม</th>${g.qs.map((_,k)=>`<th>${k<4?"Q"+(k+1):"OT"+(k-3)}</th>`).join("")}<th>รวม</th></tr></thead><tbody>
+      <tr><td>ทีมของคุณ</td>${g.qs.map(x=>`<td>${x[0]}</td>`).join("")}<td><b>${g.a}</b></td></tr>
+      <tr><td>${esc(match.opName)}</td>${g.qs.map(x=>`<td>${x[1]}</td>`).join("")}<td><b>${g.b}</b></td></tr></tbody></table></div>
+    <div class="result ${match.won?"w":"l"}"><div class="big">${match.won?"ชนะ!":"แพ้"} ${g.a}–${g.b}</div>
+      <div>MVP: <b>${esc(mvp.name)}</b> — ${mvp.pts} แต้ม ${mvp.reb} รีบาวด์ ${mvp.ast} แอสซิสต์</div>
+      <div>ได้รับ <b>+${match.reward}</b> เหรียญ${match.firstBonus?` · โบนัสผ่านด่านครั้งแรก <b>+${match.firstBonus}</b>`:""}${match.firstBonus&&match.i+1<STAGES.length?` · ปลดล็อก ${STAGES[match.i+1].name}`:""}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" data-play="${match.i}">แข่งอีกครั้ง</button>${match.won&&match.i+1<STAGES.length&&match.i+1<=S.cleared?`<button class="btn" data-play="${match.i+1}">ด่านถัดไป →</button>`:""}<button class="btn" id="backLeague">กลับไปที่ลีก</button></div>
+    </div>
+    ${teamStatsHTML(g,"สถิติทีม")}
+    <div class="box">${boxHTML(g.sides[0],"ทีมของคุณ")}</div><div class="box">${boxHTML(g.sides[1],match.opName)}</div>
+    <h3 class="eyebrow" style="margin-top:18px">เพลย์บายเพลย์</h3><div class="feed" id="feed">${feedHTML()}</div>`;
+  }else if(match.half){
+    const diff=g.a-g.b;
+    h+=`<div class="panel halfpanel">
+      <div class="eyebrow">พักครึ่ง · ${diff>0?`คุณนำ ${diff} แต้ม`:diff<0?`คุณตามอยู่ ${-diff} แต้ม`:"เสมอกันอยู่"}</div>
+      <h2 style="font-size:28px;margin-top:4px">ปรับแผนครึ่งหลัง</h2>
+      ${tacHints(match.opTac).length?`<div class="hints">${tacHints(match.opTac).map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
+      ${tacHTML(match.tac,"data-mtac")}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn primary" id="half2">เริ่มครึ่งหลัง</button><button class="btn" id="half2skip">ข้ามไปผลจบ</button></div>
+    </div>
+    ${teamStatsHTML(g,"สถิติครึ่งแรก")}
+    <h3 class="eyebrow" style="margin-top:18px">เพลย์บายเพลย์</h3><div class="feed" id="feed">${feedHTML()}</div>`;
+  }else{
+    h+=`<div class="ctrls"><button class="btn sm" data-speed="350">ความเร็ว 1x</button><button class="btn sm" data-speed="120">3x</button><button class="btn sm" data-speed="30">10x</button><button class="btn sm primary" id="skip">${g.done?"ข้ามไปผลจบ":"ข้ามไปพักครึ่ง"}</button></div>
+    <div class="feed" id="feed">${feedHTML()}</div>`;
+  }
+  return h;
+}
+
+/* ================= SHARED ROW ================= */
+function sortedOwned(){ // team members first (by slot), then rarity, then OVR
+  const RO={L:0,E:1,R:2,C:3};
+  return Object.keys(S.owned).sort((a,b)=>{const ia=S.lineup.indexOf(a),ib=S.lineup.indexOf(b);
+    const la=ia<0?99:ia, lb=ib<0?99:ib; if(la!==lb)return la-lb;
+    return RO[BYID[a].rar]-RO[BYID[b].rar]||eff(BYID[b],S.owned[b]).ovr-eff(BYID[a],S.owned[a]).ovr;});
+}
+function rowHTML(id,attrs,right,active,tag="button"){
+  const pd=BYID[id],o=S.owned[id],e=eff(pd,o),w=S.lineup.indexOf(id);
+  return `<${tag} class="srow${active?" cur":""}" ${attrs} style="--rc:var(--c-${RC[pd.rar]});--h:${pd.hue}">
+   <span class="mini-av">${pd.ini}</span>
+   <span class="pn"><b>${esc(pd.name)}</b><small>${pd.posTxt} · ${RAR[pd.rar].name} · ${esc(pd.teamTxt)}${lvTxt(o)}${w>=0?` · <span class="use">${w<5?"ตัวจริง "+POS[w]:"สำรอง"}</span>`:""}</small></span>
+   <span class="povr">${e.ovr}<span>OVR</span></span>${right}</${tag}>`;
+}
+
+/* ================= ENHANCE (ตีบวก) ================= */
+// owned[id] = {stars, plus, spent, n, spares:[{plus,spent}]} — the main copy carries the stars; spares are duplicate copies.
+// Every hit needs a 2nd copy of the same player as material; it is used up win or lose. Each + on the material adds MAT_BONUS.
+// Failing toward +4..+6 drops a level; failing toward +7..+9 destroys the target copy.
+const ENH_RATE=[1,1,1,.8,.7,.6,.5,.4,.3], ENH_MAX=9, ENH_DROP=4, ENH_BREAK=7, ENH_MULT={C:1,R:1.6,E:2.5,L:4}, MAT_BONUS=.05;
+const enhCost=(lv,rar)=>Math.round(40*(lv+1)*ENH_MULT[rar]/10)*10;
+const enhFate=lv=>lv+1>=ENH_BREAK?"break":lv+1>=ENH_DROP?"drop":"safe";
+const enhRate=(lv,mp)=>Math.min(1,ENH_RATE[lv]+mp*MAT_BONUS);
+let enhSel=null, enhMsg=null, enhConfirm=false, enhTgt=-1, enhMat=null;
+function defaultMat(sp,tgt){let best=-1;sp.forEach((s,i)=>{if(i!==tgt&&(best<0||s.plus<sp[best].plus))best=i;});return best;}
+// a copy can be hit when it is below the cap and another spare of the same player is left to use as material
+const canHitMain=o=>o.spares.length>=1&&(o.plus||0)<ENH_MAX;
+const canHitSpare=(o,i)=>o.spares.length>=2&&o.spares[i].plus<ENH_MAX;
+const canEnh=id=>{const o=S.owned[id];return canHitMain(o)||o.spares.some((_,i)=>canHitSpare(o,i));};
+function vEnh(){
+  const ids=sortedOwned().filter(canEnh);
+  if(!ids.length)return `<h2>ตีบวกการ์ด</h2><div class="panel" style="max-width:640px">
+    <div class="eyebrow">ยังไม่มีการ์ดที่ตีบวกได้</div>
+    <p style="margin:8px 0 14px">ตีบวกต้องใช้การ์ด 2 ใบของผู้เล่นคนเดียวกัน: ใบที่จะตี + ใบซ้ำเป็นวัตถุดิบ และใบที่จะตีต้องยังไม่ถึง +${ENH_MAX} · หาการ์ดซ้ำได้จากการเปิดแพ็กหรือซื้อผู้เล่นที่มีอยู่แล้วในตลาด</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" data-goto="gacha">ไปเปิดการ์ด</button><button class="btn" data-goto="market">ไปตลาด</button></div></div>`;
+  if(!enhSel||!S.owned[enhSel])enhSel=ids[0];
+  const pd=BYID[enhSel], o=S.owned[enhSel], sp=o.spares;
+  if(enhTgt>=sp.length||(enhTgt<0?!canHitMain(o):!canHitSpare(o,enhTgt)))enhTgt=canHitMain(o)?-1:sp.findIndex((_,i)=>canHitSpare(o,i));
+  if(enhMat==null||enhMat<0||enhMat>=sp.length||enhMat===enhTgt)enhMat=defaultMat(sp,enhTgt);
+  const T=enhTgt<0?o:sp[enhTgt], lv=T.plus||0, tStars=enhTgt<0?o.stars:1;
+  const cur=eff(pd,{stars:tStars,plus:lv}), nxt=eff(pd,{stars:tStars,plus:lv+1});
+  const hasMat=enhMat>=0, mp=hasMat?sp[enhMat].plus:0;
+  const max=lv>=ENH_MAX, base=max?0:ENH_RATE[lv], rate=max?0:enhRate(lv,mp), cost=max?0:enhCost(lv,pd.rar), fate=enhFate(lv);
+  const failTxt={safe:"เสียแค่เหรียญ",drop:`ลดเป็น +${lv-1}`,break:"การ์ดหาย!"}[fate];
+  const tName=enhTgt<0?"ใบหลัก":`ใบซ้ำ #${enhTgt+1}`;
+  const chip=(attr,k,label,plus,on,extra="")=>`<button class="fbtn" ${attr}="${k}" aria-pressed="${on}">${label} +${plus}${extra}</button>`;
+  const btn=max||!hasMat?"":fate==="break"&&enhConfirm
+    ?`<div class="enhwarn">ถ้าล้มเหลว <b>${esc(pd.name)} (${tName} +${lv})</b> จะหายไปถาวร และการ์ดวัตถุดิบก็หายด้วย (โอกาสล้มเหลว ${Math.round((1-rate)*100)}%)
+       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn danger" id="enhBtn">ยืนยัน ตีบวก</button><button class="btn" id="enhNo">ยกเลิก</button></div></div>`
+    :`<button class="btn primary" id="enhBtn" ${S.coins<cost?"disabled":""}>ตีบวก <span class="price"><span class="coin"></span>${cost.toLocaleString()}</span>${fate==="break"?" · เสี่ยงการ์ดหาย":""}</button>`;
+  return `<h2>ตีบวกการ์ด</h2><p class="sub">ตีบวกต้องใช้การ์ด 2 ใบ: ใบที่จะตี + การ์ดซ้ำของผู้เล่นคนเดียวกันเป็นวัตถุดิบ (ใช้หมดทุกครั้งที่ตี) · วัตถุดิบ +1 เพิ่มโอกาส ${MAT_BONUS*100}% · ตีขึ้น +1 ถึง +3 ล้มเหลวเสียแค่เหรียญ · +4 ถึง +6 ลดระดับ 1 · +7 ถึง +9 การ์ดหาย</p>
+  <div class="enhgrid">
+   <div class="panel enhmain">
+     <div class="enhcard ${enhMsg?enhMsg.cls:""}">${cardHTML(pd,{stars:tStars,plus:lv},{cw:"clamp(150px,40vw,190px)"})}</div>
+     <div class="enhinfo">
+       <div><div class="note">ใบที่จะตี</div><div class="filters" style="margin:4px 0 0">${canHitMain(o)?chip("data-tgt",-1,"ใบหลัก"+(o.stars>1?" ★"+o.stars:""),o.plus||0,enhTgt<0):""}${sp.map((s,i)=>canHitSpare(o,i)?chip("data-tgt",i,`ใบซ้ำ #${i+1}`,s.plus,enhTgt===i):"").join("")}</div></div>
+       <div><div class="note">การ์ดใบที่ 2 (วัตถุดิบ · จะหายไปหลังตี)</div>
+         ${sp.some((s,i)=>i!==enhTgt)?`<div class="filters" style="margin:4px 0 0">${sp.map((s,i)=>i===enhTgt?"":chip("data-mat",i,`ใบซ้ำ #${i+1}`,s.plus,enhMat===i,s.plus?` · +${Math.round(s.plus*MAT_BONUS*100)}%`:"")).join("")}</div>`
+           :`<p class="enhwarn" style="margin:4px 0 0;border-color:var(--line);background:var(--panel2)">ต้องมีการ์ด ${esc(pd.name)} ซ้ำอีกใบเพื่อใช้เป็นวัตถุดิบ หาได้จากการเปิดแพ็กหรือซื้อในตลาด</p>`}</div>
+       <div class="enhlv"><span>+${lv}</span>${max?"":`<b>→</b><span class="to">+${lv+1}</span>`}</div>
+       ${max?`<p style="margin:0">การ์ดใบนี้ตีบวกเต็มแล้ว</p>`:`
+       <div class="enhstats">${["ovr",...ATTR].map(k=>`<div><span>${k==="ovr"?"OVR":ATTR_LBL[k]}</span>${cur[k]}<b class="up">→ ${nxt[k]}</b></div>`).join("")}</div>
+       <div class="enhmeta"><div><span>โอกาสสำเร็จ</span><b class="${rate<.5?"dn":rate<1?"":"up"}">${Math.round(rate*100)}%</b>${hasMat&&rate>base?`<small class="up"> (ฐาน ${Math.round(base*100)}% + วัตถุดิบ)</small>`:""}</div>
+         <div><span>ถ้าล้มเหลว</span><b class="${fate==="safe"?"":"dn"}">${failTxt}</b></div></div>
+       ${btn}`}
+       ${enhMsg?`<p class="enhmsg ${enhMsg.cls}">${esc(enhMsg.text)}</p>`:""}
+     </div>
+   </div>
+   <div><div class="eyebrow" style="margin-bottom:8px">ผู้เล่นที่ตีบวกได้ ${ids.length} คน · ตัวในทีมขึ้นก่อน</div>
+     <div class="plist">${ids.map(id=>rowHTML(id,`data-enh="${id}"`,`<span class="pplus">+${S.owned[id].plus||0}</span>`,id===enhSel)).join("")}</div></div>
+  </div>`;
+}
+function doEnh(){
+  const o=S.owned[enhSel], pd=BYID[enhSel], sp=o.spares;
+  const mat=enhMat, tgt=enhTgt;
+  if(mat==null||mat<0||mat===tgt||!sp[mat])return;
+  const T0=tgt<0?o:sp[tgt], lv=T0.plus||0; if(lv>=ENH_MAX)return;
+  const cost=enhCost(lv,pd.rar); if(S.coins<cost){toast("เหรียญไม่พอ");return;}
+  const fate=enhFate(lv);
+  if(fate==="break"&&!enhConfirm){enhConfirm=true;render();return;}
+  enhConfirm=false;
+  const rate=enhRate(lv,sp[mat].plus), mPlus=sp[mat].plus;
+  S.coins-=cost;
+  sp.splice(mat,1);                       // material copy is always used up
+  let t=tgt; if(t>mat)t--;
+  const T=t<0?o:sp[t]; T.spent=(T.spent||0)+cost;
+  const nm=`${pd.name} (${t<0?"ใบหลัก":"ใบซ้ำ"})`, used=` · ใช้ใบซ้ำ +${mPlus} ไป`;
+  if(rand()<rate){T.plus=lv+1;enhMsg={cls:"ok",text:`สำเร็จ! ${nm} เป็น +${lv+1}${used}`};}
+  else if(fate==="break"){
+    if(t>=0){sp.splice(t,1);t=-1;enhMsg={cls:"broke",text:`ล้มเหลว! ใบซ้ำ +${lv} แตกหายไปแล้ว${used}`};}
+    else if(sp.length){ // main breaks: the best spare becomes the new main at ★1
+      let b=0;sp.forEach((s,i)=>{if(s.plus>sp[b].plus)b=i;});const nb=sp.splice(b,1)[0];
+      o.plus=nb.plus;o.spent=nb.spent;o.stars=1;
+      enhMsg={cls:"broke",text:`ล้มเหลว! ใบหลัก +${lv} แตกหาย · ใบซ้ำ +${nb.plus} ขึ้นเป็นใบหลักแทน (★1)${used}`};
+    }else{
+      delete S.owned[enhSel]; S.lineup=S.lineup.map(x=>x===enhSel?null:x); enhSel=null;
+      enhMsg={cls:"broke",text:`ล้มเหลว! ${pd.name} +${lv} แตกหายไปแล้ว${used}`};
+      toast(`${pd.name} แตกหายไปแล้ว${S.lineup.slice(0,5).some(x=>!x)?" · อย่าลืมจัดตัวจริงใหม่":""}`);
+    }
+  }
+  else if(fate==="drop"){T.plus=lv-1;enhMsg={cls:"fail",text:`ล้มเหลว! ระดับลดลงเป็น +${lv-1}${used}`};}
+  else enhMsg={cls:"fail",text:`ล้มเหลว! ยังอยู่ที่ +${lv}${used}`};
+  enhTgt=t; enhMat=null;
+  save();render();
+}
+// uses the spare with the lowest + to raise the main card one star
+const canStar=o=>o&&o.stars<5&&o.spares.length>0;
+function starUp(id){
+  const o=S.owned[id], sp=o.spares, i=defaultMat(sp,-1);
+  if(!canStar(o))return;
+  sp.splice(i,1); o.stars++; enhMat=null; if(enhSel===id)enhTgt=-1;
+  save(); render(); toast(`${BYID[id].name} อัปเป็น ★${o.stars} (ใช้ใบซ้ำ 1 ใบ)`);
+}
+
+/* ================= MARKET ================= */
+// prices move every hour; listings are the same for everyone within an hour unless re-rolled
+const MBASE={C:60,R:160,E:450,L:1600}, MMIN={C:74,R:82,E:88,L:93}, SELL_PCT=.4, REROLL=50;
+const hourKey=()=>Math.floor(Date.now()/3600000);
+const hsh=s=>{let h=2166136261;for(const c of String(s))h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0;};
+function mPrice(pd,k=hourKey()){const v=MBASE[pd.rar]*(1+(pd.ovr-MMIN[pd.rar])/12);const f=.8+seeded(hsh(pd.id+":"+k))()*.45;return Math.round(v*f/5)*5;}
+// a player with spares sells one spare (the lowest +) first; otherwise the main copy
+const r5=v=>Math.round(v/5)*5;
+function sellPrice(id){const o=S.owned[id],sp=o.spares,i=defaultMat(sp,-1);
+  if(i>=0)return r5(mPrice(BYID[id])*SELL_PCT)+r5((sp[i].spent||0)*.4);
+  return r5(mPrice(BYID[id])*(1+.7*(o.stars-1))*SELL_PCT)+r5((o.spent||0)*.4);}
+function listings(){
+  const key=hourKey()+"-"+(S.refresh||0);
+  if(!S.market||S.market.key!==key)S.market={key,bought:[]};
+  const r=seeded(hsh("m"+key)), used=new Set();
+  const rars=["C","C","R","R","R","E","E",r()<.4?"L":"E"];
+  return rars.map(rar=>{const pool=BYRAR[rar].filter(p=>!used.has(p.id));const p=pool[Math.floor(r()*pool.length)];used.add(p.id);return p;});
+}
+let sellConfirm=null;
+function vMarket(){
+  const L=listings(), k=hourKey(), mins=60-new Date().getMinutes(), ids=sortedOwned();
+  return `<h2>ตลาดซื้อขายผู้เล่น</h2><p class="sub">ราคาขึ้นลงทุกชั่วโมง · ประกาศขายชุดใหม่ในอีก ${mins} นาที · อยากได้ใครเจาะจง ซื้อที่นี่แทนการสุ่ม</p>
+  <div class="mhead"><div class="eyebrow">ประกาศขายตอนนี้</div><button class="btn sm" id="mRefresh" ${S.coins<REROLL?"disabled":""}>สุ่มประกาศใหม่ <span class="price"><span class="coin"></span>${REROLL}</span></button></div>
+  <div class="mgrid">${L.map(pd=>{const o=S.owned[pd.id], pr=mPrice(pd), prev=mPrice(pd,k-1), sold=S.market.bought.includes(pd.id), full=o&&o.spares.length>=MAX_SPARES;
+     const tr=pr>prev?`<span class="up">▲${Math.round((pr/prev-1)*100)}%</span>`:pr<prev?`<span class="dn">▼${Math.round((1-pr/prev)*100)}%</span>`:"";
+     return `<div class="mitem">${cardHTML(pd,o||1,{locked:sold})}
+       <div class="mnote">${sold?"ซื้อแล้ว":o?(full?"การ์ดซ้ำเต็มแล้ว":`มีแล้ว · ใบซ้ำ ${o.spares.length} ใบ`):"ยังไม่มี"} · ${tr||"ราคาคงที่"}</div>
+       <button class="btn sm ${sold?"":"primary"}" data-buy="${pd.id}" ${sold||full||S.coins<pr?"disabled":""}>${sold?"ขายไปแล้ว":`ซื้อ <span class="price"><span class="coin"></span>${pr.toLocaleString()}</span>`}</button></div>`;}).join("")}</div>
+  <div class="eyebrow" style="margin:28px 0 4px">ขายการ์ดของคุณ</div>
+  <p class="note" style="margin:0 0 10px">ได้ ${SELL_PCT*100}% ของราคาตลาด (ใบหลักหลายดาวได้มากขึ้น) + คืน 40% ของเหรียญที่ใช้ตีบวก · ถ้ามีใบซ้ำจะขายใบซ้ำ (+ ต่ำสุด) ก่อน · ขายใบหลักแล้วผู้เล่นจะออกจากทีม</p>
+  ${ids.length?`<div class="plist">${ids.map(id=>{const sp=sellPrice(id), what=S.owned[id].spares.length?"ใบซ้ำ":"ใบหลัก";
+    const btn=sellConfirm===id?`<span class="sellbtns"><button class="btn sm danger" data-sellyes="${id}">ยืนยันขาย${what} ${sp.toLocaleString()}</button><button class="btn sm" data-sellno="1">ยกเลิก</button></span>`
+      :`<button class="btn sm" data-sell="${id}">ขาย${what} <span class="price"><span class="coin"></span>${sp.toLocaleString()}</span></button>`;
+    return rowHTML(id,"",btn,false,"div");}).join("")}</div>`:`<p class="sub">ยังไม่มีการ์ดให้ขาย</p>`}`;
+}
+function buy(id){
+  listings(); const pd=BYID[id], pr=mPrice(pd);
+  if(S.market.bought.includes(id)||S.coins<pr)return;
+  S.coins-=pr; S.market.bought.push(id); const kind=addCard(pd); save(); render();
+  toast(kind==="new"?`ได้ ${pd.name} แล้ว`:kind==="dup"?`ได้ ${pd.name} ใบซ้ำ (มี ${S.owned[id].spares.length} ใบ)`:"ได้เหรียญคืน");
+}
+function sell(id){
+  const p=sellPrice(id), nm=BYID[id].name, o=S.owned[id], i=defaultMat(o.spares,-1);
+  S.coins+=p;
+  if(i>=0)o.spares.splice(i,1);
+  else{delete S.owned[id]; S.lineup=S.lineup.map(x=>x===id?null:x); if(enhSel===id)enhSel=null;}
+  sellConfirm=null; enhMat=null; enhTgt=-1; save(); render();
+  toast(`ขาย ${nm}${i>=0?" (ใบซ้ำ)":""} ได้ ${p.toLocaleString()} เหรียญ`);
+}
+
+/* ================= EVENTS ================= */
+document.addEventListener("click",ev=>{
+  const t=ev.target.closest("button,[data-slot],[data-flip],[data-pick],.modal");
+  if(!t)return;
+  if(t.id==="modal"&&ev.target===t){closeModal();return;}
+  const d=t.dataset;
+  if(d.v){setView(d.v);return;}
+  if(d.goto){setView(d.goto);return;}
+  if(d.pull){doPull(+d.pull);return;}
+  if(d.flip!=null&&lastPull){const r=lastPull[+d.flip];if(!r.open){r.open=true;t.classList.add("open");if(lastPull.every(x=>x.open))render();}return;}
+  if(t.id==="openAll"){openAllCards();return;}
+  if(t.id==="starterPull"){starterPull();return;}
+  if(t.id==="starterDone"){finishStarter();return;}
+  if(t.id==="bonusBtn"){S.coins+=300;S.bonusAt=Date.now()+2*3600*1000;save();render();toast("+300 เหรียญ · กลับมารับใหม่ในอีก 2 ชั่วโมง");return;}
+  if(t.id==="autoBtn"){autoLineup();return;}
+  if(d.autof){S.autoF=d.autof;save();render();return;}
+  if(d.pick){assign(d.pick,+d.to);return;}
+  if(d.psort){pickSort=d.psort;openPicker(pickerSlot);return;}
+  if(d.enh){enhSel=d.enh;enhMsg=null;enhConfirm=false;enhTgt=-1;enhMat=null;render();return;}
+  if(d.tgt!=null){enhTgt=+d.tgt;enhMat=null;enhConfirm=false;enhMsg=null;render();return;}
+  if(d.mat!=null){enhMat=+d.mat;enhConfirm=false;render();return;}
+  if(d.star){starUp(d.star);return;}
+  if(t.id==="enhBtn"){doEnh();return;}
+  if(t.id==="enhNo"){enhConfirm=false;render();return;}
+  if(d.buy){buy(d.buy);return;}
+  if(t.id==="mRefresh"){if(S.coins>=REROLL){S.coins-=REROLL;S.refresh=(S.refresh||0)+1;save();render();}return;}
+  if(d.sell){sellConfirm=d.sell;render();return;}
+  if(d.sellno){sellConfirm=null;render();return;}
+  if(d.sellyes){sell(d.sellyes);return;}
+  if(d.slot!=null&&view==="team"){openPicker(+d.slot);return;}
+  if(d.clear!=null){S.lineup[+d.clear]=null;save();closeModal();render();return;}
+  if(t.id==="closeModal"){closeModal();return;}
+  if(d.f){collFilter[d.f]=d.fv;render();return;}
+  if(d.roster!=null){const i=+d.roster;leagueInfo[i]=Object.assign(leagueInfo[i]||{},{show:!(leagueInfo[i]||{}).show});render();return;}
+  if(d.odds!=null){runOdds(+d.odds);return;}
+  if(d.play!=null){const iss=rosterIssue();if(iss){toast("ยังลงแข่งไม่ได้: "+iss);return;}startMatch(+d.play);window.scrollTo(0,0);return;}
+  if(d.speed){match.speed=+d.speed;play();return;}
+  if(t.id==="skip"){skipAhead();return;}
+  if(t.id==="half2"){secondHalf(false);return;}
+  if(t.id==="half2skip"){secondHalf(true);return;}
+  if(d.tac){S.tac={...S.tac,[d.tac]:d.tv};Object.values(leagueInfo).forEach(x=>delete x.odds);save();render();return;}
+  if(d.mtac){match.tac[d.mtac]=d.tv;render();return;}
+  if(t.id==="backLeague"){match=null;setView("league");return;}
+  if(t.id==="resetBtn"){$("#resetbox").innerHTML=`ลบความคืบหน้าทั้งหมด? <button class="btn sm" id="resetYes" style="border-color:var(--lose)">ยืนยันเริ่มใหม่</button> <button class="btn sm" id="resetNo">ยกเลิก</button>`;return;}
+  if(t.id==="resetYes"){S=fresh();save();lastPull=null;match=null;leagueInfo={};resetFooter();setView("gacha");toast("เริ่มเกมใหม่แล้ว");return;}
+  if(t.id==="resetNo"){resetFooter();return;}
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape")closeModal();
+  if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-flip],.empty")){e.preventDefault();e.target.click();}
+});
+function resetFooter(){$("#resetbox").innerHTML=`<button class="btn sm" id="resetBtn">เริ่มเกมใหม่</button>`;}
+function openAllCards(){
+  if(!lastPull)return; let k=0;
+  lastPull.forEach((r,i)=>{if(r.open)return;r.open=true;const el=document.querySelector(`[data-flip="${i}"]`);setTimeout(()=>el&&el.classList.add("open"),k++*140);});
+  setTimeout(render,k*140+600);
+}
+
+render();
+cloudInit();
+</script>
